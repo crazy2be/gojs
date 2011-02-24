@@ -349,3 +349,27 @@ func (ctx *Context) ObjectSetProperty(obj *ObjectRef, name string, rhs *ValueRef
 	return nil
 }
 
+func (ctx *Context) ObjectDeleteProperty(obj *ObjectRef, name string ) (bool,*ValueRef) {
+	jsstr := ctx.NewString( name )
+	defer jsstr.Release()
+
+	var exception C.JSValueRef
+
+	ret := C.JSObjectDeleteProperty( ctx.value, obj.value, jsstr.value, &exception )
+	if exception != nil {
+		return false, &ValueRef{ exception }
+	}
+
+	return bool(ret), nil
+}
+
+func (ctx *Context) IsFunction(obj *ObjectRef) bool {
+	ret := C.JSObjectIsFunction( ctx.value, obj.value )
+	return bool(ret)
+}
+
+func (ctx *Context) IsConstructor(obj *ObjectRef) bool {
+	ret := C.JSObjectIsConstructor( ctx.value, obj.value )
+	return bool(ret)
+}
+
