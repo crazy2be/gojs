@@ -50,6 +50,10 @@ func main() {
 	fmt.Printf( "%v %v\n", s.Length(), s.String() )
 	fmt.Printf( "%v %v\n", s.EqualToString("Hello"), s.EqualToString("Hello from go!") )
 
+	ctx.EvaluateScript( "var a = \"Go!\"", nil, "", 1 )
+	a, err := ctx.ObjectGetProperty( ctx.GlobalObject(), "a" )
+	fmt.Printf( "%v %s %v\n", a, ctx.ToStringOrDie(a), err )
+
 	fmt.Printf("\nScripts...\n" )
 	print_result( ctx, "null" )
 	print_result( ctx, "false" )
