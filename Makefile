@@ -1,7 +1,10 @@
 include $(GOROOT)/src/Make.inc
 
 TARG=javascriptcore
-CGOFILES=javascriptcore.go 
+CGOFILES=\
+	string.go \
+	javascriptcore.go
+CGO_OFILES=callback.o
 CGO_CFLAGS=`pkg-config --cflags webkit-1.0`
 CGO_LDFLAGS=`pkg-config --libs webkit-1.0`
 
