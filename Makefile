@@ -4,6 +4,7 @@ TARG=javascriptcore
 CGOFILES=\
 	base.go \
 	context.go \
+	object.go \
 	string.go \
 	javascriptcore.go
 CGO_OFILES=callback.o

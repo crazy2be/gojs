@@ -41,6 +41,11 @@ func (ctx *Context) ValueIsBoolean( v *Value ) bool {
 	return bool( ret )
 }
 
+func (ctx *Context) ValueIsNumber( v *Value ) bool {
+	ret := C.JSValueIsNumber( ctx.value, C.JSValueRef(unsafe.Pointer(v)) )
+	return bool( ret )
+}
+
 func (ctx *Context) ValueIsString( v *Value ) bool {
 	ret := C.JSValueIsString( ctx.value, C.JSValueRef(unsafe.Pointer(v)) )
 	return bool( ret )
@@ -132,6 +137,14 @@ func (ctx *Context) ToNumber( ref *Value ) (num float64,err *Value) {
 	return float64(ret), nil
 }
 
+func (ctx *Context) ToNumberOrDie( ref *Value ) float64 {
+	ret, err := ctx.ToNumber( ref )
+	if err!=nil {
+		panic( err )
+	}
+	return ret
+}
+
 func (ctx *Context) ToString( ref *Value ) (str string, err *Value) {
 	var exception C.JSValueRef
 	ret := C.JSValueToStringCopy( ctx.value, C.JSValueRef(unsafe.Pointer(ref)), &exception )
@@ -195,107 +208,6 @@ const (
 	ClassAttributeNoAutomaticPrototype = 1 << 1
 )
 
-type PropertyNameArray struct {
-}
-
-func (ctx *Context) ObjectHasProperty(obj *Object, name string) bool {
-	jsstr := ctx.NewString( name )
-	defer jsstr.Release()
-
-	ret := C.JSObjectHasProperty( ctx.value, C.JSObjectRef(unsafe.Pointer(obj)), C.JSStringRef(unsafe.Pointer(jsstr)) )
-	return bool(ret)
-}
-
-func (ctx *Context) ObjectGetProperty(obj *Object, name string) (*Value,*Value) {
-	jsstr := ctx.NewString( name )
-	defer jsstr.Release()
-
-	var exception C.JSValueRef
-
-	ret := C.JSObjectGetProperty( ctx.value, C.JSObjectRef(unsafe.Pointer(obj)), C.JSStringRef(unsafe.Pointer(jsstr)), &exception )
-	if exception != nil {
-		return nil, (*Value)(unsafe.Pointer(exception))
-	}
-
-	return (*Value)(unsafe.Pointer(ret)), nil
-}
-
-func (ctx *Context) ObjectGetPropertyAtIndex(obj *Object, index uint16) (*Value,*Value) {
-	var exception C.JSValueRef
-
-	ret := C.JSObjectGetPropertyAtIndex( ctx.value, C.JSObjectRef(unsafe.Pointer(obj)), C.unsigned(index), &exception )
-	if exception != nil {
-		return nil, (*Value)(unsafe.Pointer(exception))
-	}
-
-	return (*Value)(unsafe.Pointer(ret)), nil
-}
-
-func (ctx *Context) ObjectSetProperty(obj *Object, name string, rhs *Value, attributes uint8) *Value {
-	jsstr := ctx.NewString( name )
-	defer jsstr.Release()
-
-	var exception C.JSValueRef
-
-	C.JSObjectSetProperty( ctx.value, C.JSObjectRef(unsafe.Pointer(obj)), C.JSStringRef(unsafe.Pointer(jsstr)), C.JSValueRef(unsafe.Pointer(rhs)), 
-		(C.JSPropertyAttributes)(attributes), &exception )
-	if exception != nil {
-		return (*Value)(unsafe.Pointer(exception))
-	}
-
-	return nil
-}
-
-func (ctx *Context) ObjectSetPropertyAtIndex(obj *Object, index uint16, rhs *Value) *Value {
-	var exception C.JSValueRef
-
-	C.JSObjectSetPropertyAtIndex( ctx.value, C.JSObjectRef(unsafe.Pointer(obj)), C.unsigned(index), 
-		C.JSValueRef(unsafe.Pointer(rhs)), &exception )
-	if exception != nil {
-		return (*Value)(unsafe.Pointer(exception))
-	}
-
-	return nil
-}
-
-func (ctx *Context) ObjectDeleteProperty(obj *Object, name string ) (bool,*Value) {
-	jsstr := ctx.NewString( name )
-	defer jsstr.Release()
-
-	var exception C.JSValueRef
-
-	ret := C.JSObjectDeleteProperty( ctx.value, C.JSObjectRef(unsafe.Pointer(obj)), C.JSStringRef(unsafe.Pointer(jsstr)), &exception )
-	if exception != nil {
-		return false, (*Value)(unsafe.Pointer(exception))
-	}
-
-	return bool(ret), nil
-}
-
-func (obj *Object) GetPrivate() unsafe.Pointer {
-	ret := C.JSObjectGetPrivate( C.JSObjectRef(unsafe.Pointer(obj)) )
-	return ret
-}
-
-func (obj *Object) SetPrivate(data unsafe.Pointer) bool {
-	ret := C.JSObjectSetPrivate( C.JSObjectRef(unsafe.Pointer(obj)), data )
-	return bool( ret )
-}
-
-func (obj *Object) GetValue() *Value {
-	return (*Value)(unsafe.Pointer(obj))
-}
-
-func (ctx *Context) IsFunction(obj *Object) bool {
-	ret := C.JSObjectIsFunction( ctx.value, C.JSObjectRef(unsafe.Pointer(obj)) )
-	return bool(ret)
-}
-
-func (ctx *Context) IsConstructor(obj *Object) bool {
-	ret := C.JSObjectIsConstructor( ctx.value, C.JSObjectRef(unsafe.Pointer(obj)) )
-	return bool(ret)
-}
-
 func (ctx *Context) CopyPropertyNames(obj *Object) *PropertyNameArray {
 	ret := C.JSObjectCopyPropertyNames( ctx.value, C.JSObjectRef(unsafe.Pointer(obj)) )
 	return (*PropertyNameArray)(unsafe.Pointer( ret ))
@@ -324,7 +236,7 @@ type Function interface {
 	Callback( ctx *Context, obj *Object, thisObject *Object, exception **Value ) *Value
 }
 
-func (ctx *Context) MakeFunction( name string, f Function ) *Object {
+func (ctx *Context) MakeFunctionEx( name string, f Function ) *Object {
 	stringRef := (*String)(nil)
 	if name != "" {
 		stringRef = ctx.NewString( name )
