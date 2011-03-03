@@ -10,18 +10,12 @@ var(
 )
 
 func TestString(t *testing.T) {
-	ctx := js.NewContext()
-	defer ctx.Release()
-
-	str := ctx.NewString( "a string" )
+	str := js.NewString( "a string" )
 	defer str.Release()
 }
 
 func TestString2(t *testing.T) {
-	ctx := js.NewContext()
-	defer ctx.Release()
-
-	str := ctx.NewString( "a string" )
+	str := js.NewString( "a string" )
 	defer str.Release()
 
 	str.Retain()
@@ -29,11 +23,8 @@ func TestString2(t *testing.T) {
 }
 
 func TestStringString(t *testing.T) {
-	ctx := js.NewContext()
-	defer ctx.Release()
-
 	for _, item := range strtests {
-		str := ctx.NewString( item )
+		str := js.NewString( item )
 		defer str.Release()
 
 		if str.String() != item {
@@ -46,14 +37,11 @@ func TestStringString(t *testing.T) {
 }
 
 func TestStringEqual(t *testing.T) {
-	ctx := js.NewContext()
-	defer ctx.Release()
-
-	lhs := ctx.NewString( "dummy" )
+	lhs := js.NewString( "dummy" )
 	defer lhs.Release()
 
 	for _, item := range strtests {
-		str := ctx.NewString( item )
+		str := js.NewString( item )
 		defer str.Release()
 
 		if lhs.Equal( str ) {
@@ -66,7 +54,7 @@ func TestStringEqual(t *testing.T) {
 			t.Errorf( "String did not compared as equal to itself \"%v\", and \"%v\"", str )
 		}
 
-		str2 := ctx.NewString( item )
+		str2 := js.NewString( item )
 		defer str2.Release()
 		if !str.Equal( str2 ) {
 			t.Errorf( "String did not compared as equal to itself \"%v\", and \"%v\"", str2 )
@@ -75,14 +63,11 @@ func TestStringEqual(t *testing.T) {
 }
 
 func TestStringEqualToString(t *testing.T) {
-	ctx := js.NewContext()
-	defer ctx.Release()
-
-	lhs := ctx.NewString( "dummy" )
+	lhs := js.NewString( "dummy" )
 	defer lhs.Release()
 
 	for _, item := range strtests {
-		str := ctx.NewString( item )
+		str := js.NewString( item )
 		defer str.Release()
 
 		if lhs.EqualToString( item ) {

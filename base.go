@@ -13,24 +13,24 @@ type ContextGroup struct {
 }
 
 type Context struct {
-	value C.JSGlobalContextRef
 }
 
 type GlobalContext Context
 
 func (ctx *Context) EvaluateScript( script string, obj *Object, source_url string, startingLineNumber int ) (*Value, *Value) {
-	scriptRef := ctx.NewString( script )
+	scriptRef := NewString( script )
 	defer scriptRef.Release()
 
 	var sourceRef *String
 	if source_url != "" {
-		sourceRef = ctx.NewString( source_url )
+		sourceRef = NewString( source_url )
 		defer sourceRef.Release()
 	}
 
 	var exception C.JSValueRef
 
-	ret := C.JSEvaluateScript( ctx.value, C.JSStringRef(unsafe.Pointer(scriptRef)), C.JSObjectRef(unsafe.Pointer(obj)), 
+	ret := C.JSEvaluateScript( C.JSContextRef(unsafe.Pointer(ctx)), 
+		C.JSStringRef(unsafe.Pointer(scriptRef)), C.JSObjectRef(unsafe.Pointer(obj)), 
 		C.JSStringRef(unsafe.Pointer(sourceRef)), C.int(startingLineNumber), &exception )
 	if ret == nil {
 		// An error occurred
@@ -43,18 +43,19 @@ func (ctx *Context) EvaluateScript( script string, obj *Object, source_url strin
 }
 
 func (ctx *Context) CheckScriptSyntax( script string, source_url string, startingLineNumber int ) *Value {
-	scriptRef := ctx.NewString( script )
+	scriptRef := NewString( script )
 	defer scriptRef.Release()
 
 	var sourceRef *String
 	if source_url != "" {
-		sourceRef = ctx.NewString( source_url )
+		sourceRef = NewString( source_url )
 		defer sourceRef.Release()
 	} 
 
 	var exception C.JSValueRef
 
-	ret := C.JSCheckScriptSyntax( ctx.value, C.JSStringRef(unsafe.Pointer(scriptRef)), C.JSStringRef(unsafe.Pointer(sourceRef)), 
+	ret := C.JSCheckScriptSyntax( C.JSContextRef(unsafe.Pointer(ctx)), 
+		C.JSStringRef(unsafe.Pointer(scriptRef)), C.JSStringRef(unsafe.Pointer(sourceRef)), 
 		C.int(startingLineNumber), &exception )
 	if !ret {
 		// A syntax error was found
@@ -67,6 +68,6 @@ func (ctx *Context) CheckScriptSyntax( script string, source_url string, startin
 }
 
 func (ctx *Context) GarbageCollect() {
-	C.JSGarbageCollect( ctx.value )
+	C.JSGarbageCollect( C.JSContextRef(unsafe.Pointer(ctx)) )
 }
 

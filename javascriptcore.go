@@ -26,45 +26,45 @@ const (
 // *Value
 //
 
-func (ctx *Context) ValueIsUndefined( v *Value ) bool {
-	ret := C.JSValueIsUndefined( ctx.value, C.JSValueRef(unsafe.Pointer(v)) )
+func (ctx *Context) IsUndefined( v *Value ) bool {
+	ret := C.JSValueIsUndefined( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(v)) )
 	return bool( ret )
 }
 
-func (ctx *Context) ValueIsNull( v *Value ) bool {
-	ret := C.JSValueIsNull( ctx.value, C.JSValueRef(unsafe.Pointer(v)) )
+func (ctx *Context) IsNull( v *Value ) bool {
+	ret := C.JSValueIsNull( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(v)) )
 	return bool( ret )
 }
 
-func (ctx *Context) ValueIsBoolean( v *Value ) bool {
-	ret := C.JSValueIsBoolean( ctx.value, C.JSValueRef(unsafe.Pointer(v)) )
+func (ctx *Context) IsBoolean( v *Value ) bool {
+	ret := C.JSValueIsBoolean( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(v)) )
 	return bool( ret )
 }
 
-func (ctx *Context) ValueIsNumber( v *Value ) bool {
-	ret := C.JSValueIsNumber( ctx.value, C.JSValueRef(unsafe.Pointer(v)) )
+func (ctx *Context) IsNumber( v *Value ) bool {
+	ret := C.JSValueIsNumber( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(v)) )
 	return bool( ret )
 }
 
-func (ctx *Context) ValueIsString( v *Value ) bool {
-	ret := C.JSValueIsString( ctx.value, C.JSValueRef(unsafe.Pointer(v)) )
+func (ctx *Context) IsString( v *Value ) bool {
+	ret := C.JSValueIsString( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(v)) )
 	return bool( ret )
 }
 
-func (ctx *Context) ValueIsObject( v *Value ) bool {
-	ret := C.JSValueIsObject( ctx.value, C.JSValueRef(unsafe.Pointer(v)) )
+func (ctx *Context) IsObject( v *Value ) bool {
+	ret := C.JSValueIsObject( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(v)) )
 	return bool( ret )
 }
 
 func (ctx *Context) ValueType( v *Value ) uint8 {
-	ret := C.JSValueGetType( ctx.value, C.JSValueRef(unsafe.Pointer(v)) )
+	ret := C.JSValueGetType( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(v)) )
 	return uint8( ret )
 }
 
 func (ctx *Context) IsEqual( a *Value, b *Value ) (bool, *Value) {
 	exception := C.JSValueRef(nil)
 
-	ret := C.JSValueIsEqual( ctx.value, C.JSValueRef(unsafe.Pointer(a)), C.JSValueRef(unsafe.Pointer(b)), &exception )
+	ret := C.JSValueIsEqual( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(a)), C.JSValueRef(unsafe.Pointer(b)), &exception )
 	if exception != nil {
 		return false, (*Value)(unsafe.Pointer(exception))
 	}
@@ -73,27 +73,27 @@ func (ctx *Context) IsEqual( a *Value, b *Value ) (bool, *Value) {
 }
 
 func (ctx *Context) IsStrictEqual( a *Value, b *Value ) bool {
-	ret := C.JSValueIsStrictEqual( ctx.value, C.JSValueRef(unsafe.Pointer(a)), C.JSValueRef(unsafe.Pointer(b)) )
+	ret := C.JSValueIsStrictEqual( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(a)), C.JSValueRef(unsafe.Pointer(b)) )
 	return bool(ret)
 }
 
 func (ctx *Context) NewUndefinedValue() *Value {
-	ref := C.JSValueMakeUndefined( ctx.value )
+	ref := C.JSValueMakeUndefined( C.JSContextRef(unsafe.Pointer(ctx)) )
 	return (*Value)(unsafe.Pointer(ref))
 }
 
 func (ctx *Context) NewNullValue() *Value {
-	ref := C.JSValueMakeNull( ctx.value )
+	ref := C.JSValueMakeNull( C.JSContextRef(unsafe.Pointer(ctx)) )
 	return (*Value)(unsafe.Pointer(ref))
 }
 
 func (ctx *Context) NewBooleanValue( value bool ) *Value {
-	ref := C.JSValueMakeBoolean( ctx.value, C.bool(value) )
+	ref := C.JSValueMakeBoolean( C.JSContextRef(unsafe.Pointer(ctx)), C.bool(value) )
 	return (*Value)(unsafe.Pointer(ref))
 }
 
 func (ctx *Context) NewNumberValue( value float64 ) *Value {
-	ref := C.JSValueMakeNumber( ctx.value, C.double(value) )
+	ref := C.JSValueMakeNumber( C.JSContextRef(unsafe.Pointer(ctx)), C.double(value) )
 	return (*Value)(unsafe.Pointer(ref))
 }
 
@@ -102,11 +102,11 @@ func (ctx *Context) NewStringValue( value string ) *Value {
 	defer C.free( unsafe.Pointer(cvalue) )
 	jsstr := C.JSStringCreateWithUTF8CString( cvalue )
 	defer C.JSStringRelease( jsstr )
-	ref := C.JSValueMakeString( ctx.value, jsstr )
+	ref := C.JSValueMakeString( C.JSContextRef(unsafe.Pointer(ctx)), jsstr )
 	return (*Value)(unsafe.Pointer(ref))
 }
 
-func (ctx *Context) NewString( value string ) *String {
+func NewString( value string ) *String {
 	cvalue := C.CString( value )
 	defer C.free( unsafe.Pointer(cvalue) )
 	ref := C.JSStringCreateWithUTF8CString( cvalue )
@@ -114,21 +114,21 @@ func (ctx *Context) NewString( value string ) *String {
 }
 
 func (ctx *Context) ProtectValue( ref *Value ) {
-	C.JSValueProtect( ctx.value, C.JSValueRef(unsafe.Pointer(ref)) )
+	C.JSValueProtect( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(ref)) )
 }
 
 func (ctx *Context) UnProtectValue( ref **Value ) {
-	C.JSValueProtect( ctx.value, C.JSValueRef(unsafe.Pointer(ref)) )
+	C.JSValueProtect( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(ref)) )
 }
 
 func (ctx *Context) ToBoolean( ref *Value ) bool {
-	ret := C.JSValueToBoolean( ctx.value, C.JSValueRef(unsafe.Pointer(ref)) )
+	ret := C.JSValueToBoolean( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(ref)) )
 	return bool( ret )
 }
 
 func (ctx *Context) ToNumber( ref *Value ) (num float64,err *Value) {
 	var exception C.JSValueRef
-	ret := C.JSValueToNumber( ctx.value, C.JSValueRef(unsafe.Pointer(ref)), &exception )
+	ret := C.JSValueToNumber( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(ref)), &exception )
 	if exception != nil {
 		return float64(ret), (*Value)(unsafe.Pointer(exception))
 	}
@@ -147,7 +147,7 @@ func (ctx *Context) ToNumberOrDie( ref *Value ) float64 {
 
 func (ctx *Context) ToString( ref *Value ) (str string, err *Value) {
 	var exception C.JSValueRef
-	ret := C.JSValueToStringCopy( ctx.value, C.JSValueRef(unsafe.Pointer(ref)), &exception )
+	ret := C.JSValueToStringCopy( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(ref)), &exception )
 	if exception != nil {
 		// An error occurred
 		// ret should be null
@@ -170,7 +170,7 @@ func (ctx *Context) ToStringOrDie( ref *Value ) string {
 
 func (ctx *Context) ToObject( ref *Value ) (obj *Object, err *Value) {
 	var exception C.JSValueRef
-	ret := C.JSValueToObject( ctx.value, C.JSValueRef(unsafe.Pointer(ref)), &exception )
+	ret := C.JSValueToObject( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(ref)), &exception )
 	if exception != nil {
 		// An error occurred
 		// ret should be null
@@ -182,14 +182,11 @@ func (ctx *Context) ToObject( ref *Value ) (obj *Object, err *Value) {
 }
 
 func (ctx *Context) ToObjectOrDie( ref *Value ) *Object {
-	var exception C.JSValueRef
-	ret := C.JSValueToObject( ctx.value, C.JSValueRef(unsafe.Pointer(ref)), &exception )
-	if exception != nil {
-		panic( (*Value)(unsafe.Pointer(exception)) )
+	ret, err := ctx.ToObject( ref )
+	if err!=nil {
+		panic( err )
 	}
-
-	// Successful conversion
-	return (*Object)(unsafe.Pointer(ret))
+	return ret
 }
 
 //=========================================================
@@ -209,7 +206,7 @@ const (
 )
 
 func (ctx *Context) CopyPropertyNames(obj *Object) *PropertyNameArray {
-	ret := C.JSObjectCopyPropertyNames( ctx.value, C.JSObjectRef(unsafe.Pointer(obj)) )
+	ret := C.JSObjectCopyPropertyNames( C.JSContextRef(unsafe.Pointer(ctx)), C.JSObjectRef(unsafe.Pointer(obj)) )
 	return (*PropertyNameArray)(unsafe.Pointer( ret ))
 }
 
@@ -230,30 +227,5 @@ func (ref *PropertyNameArray) NameAtIndex( index uint16 ) string {
 	jsstr := C.JSPropertyNameArrayGetNameAtIndex( C.JSPropertyNameArrayRef(unsafe.Pointer(ref)), C.size_t(index) )
 	defer C.JSStringRelease( jsstr )
 	return string_js_2_go( jsstr )
-}
-
-type Function interface {
-	Callback( ctx *Context, obj *Object, thisObject *Object, exception **Value ) *Value
-}
-
-func (ctx *Context) MakeFunctionEx( name string, f Function ) *Object {
-	stringRef := (*String)(nil)
-	if name != "" {
-		stringRef = ctx.NewString( name )
-		defer stringRef.Release()
-	}
-
-	tmp := C.JSObjectMakeFunctionWithCallback_wka( ctx.value, C.JSStringRef(unsafe.Pointer(stringRef)), unsafe.Pointer( &f ) )
-	return (*Object)(unsafe.Pointer(tmp))
-}
-
-//export JSObjectCallAsFunctionCallback_go
-func JSObjectCallAsFunctionCallback_go( callback unsafe.Pointer, ret *unsafe.Pointer ) {
-//	ctx C.JSContextRef, function C.JS*Object, thisObject C.JS*Object, argumentCount uint16, JS*Value* exception ) C.JSValueRef {
-
-	f := *(*Function)( callback )
-	var exception *Value
-	value := f.Callback( nil, nil, nil, &exception )
-	*ret = unsafe.Pointer( value )
 }
 

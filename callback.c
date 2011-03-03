@@ -4,39 +4,24 @@
 #include "_cgo_export.h"
 #include "callback.h"
 
-FILE* fp = 0;
-
 static JSValueRef JSObjectCallAsFunctionCallback_trampoline(
 	JSContextRef ctx, JSObjectRef function, 
 	JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], 
 	JSValueRef* exception)
 {
-	void* value = 0;
+	assert( ctx );
+	assert( function );
 
-	// Extract point to go callback
-	fprintf( fp, "callback ref = %p, %p\n", function, thisObject ); fflush(fp);
-	void* data = JSObjectGetPrivate( function );
-	assert( data );
-	JSObjectCallAsFunctionCallback_go( data, value );
-	return (JSValueRef)value;
+	JSObjectCallAsFunctionCallback_go( ctx, function, thisObject, argumentCount, arguments, exception );
+	return 0;
 }
 
-JSObjectRef JSObjectMakeFunctionWithCallback_wka( JSContextRef ctx, JSStringRef name, void* go_object )
+JSObjectRef JSObjectMakeFunctionWithCallback_wka( JSContextRef ctx, JSStringRef name )
 {
 	assert( ctx );
-	assert( go_object );
-
-	if ( !fp ) {
-		fp = fopen( "./tmp.log", "w" );
-		assert( fp );
-	}
+	assert( name );
 
 	JSObjectRef ref = JSObjectMakeFunctionWithCallback( ctx, name, JSObjectCallAsFunctionCallback_trampoline );
-	fprintf( fp, "ref = %p\n", ref );  fflush(fp);
-	if (ref) {
-		JSObjectSetPrivate( ref, go_object );
-		assert( JSObjectGetPrivate(ref) == go_object );
-	}
 	return ref;
 }
-	
+

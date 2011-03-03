@@ -5,6 +5,31 @@ import(
 	js "javascriptcore"
 )
 
+func TestMakeFunctionWithCallback(t *testing.T) {
+	var flag bool
+	callback := func (ctx *js.Context, obj *js.Object, thisObject *js.Object ) (*js.Value, *js.Value){
+		flag = true
+		return nil, nil
+	}
+
+	ctx := js.NewContext()
+	defer ctx.Release()
+
+	fn := ctx.MakeFunctionWithCallback( "foo", callback )
+	if fn == nil {
+		t.Errorf( "ctx.MakeFunctionWithCallback failed" )
+		return
+	}
+	defer ctx.ReleaseFunctionWithCallback( fn )
+	if !ctx.IsFunction( fn ) {
+		t.Errorf( "ctx.MakeFunctionWithCallback returned value that is not a function" )
+	}
+	ctx.CallAsFunction( fn, nil, []*js.Value{} )
+	if !flag {
+		t.Errorf( "Native function did not execute" )
+	}
+}
+
 func TestMakeRegExp(t *testing.T) {
 	tests := []string{ "\\bt[a-z]+\\b", "[0-9]+(\\.[0-9]*)?" }
 
@@ -68,7 +93,7 @@ func TestMakeCallAsFunction(t *testing.T) {
 	if err != nil {
 		t.Errorf( "ctx.CallAsFunction failed with %v", err )
 	}
-	if !ctx.ValueIsNumber( val ) {
+	if !ctx.IsNumber( val ) {
 		t.Errorf( "ctx.CallAsFunction did not compute the right value" )
 	}
 
