@@ -1,0 +1,8 @@
+syntax: glob
+
+*.cgo1.*
+*.cgo2.*
+*.8
+*.o
+_cgo_*
+
