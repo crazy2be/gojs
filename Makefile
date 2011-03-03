@@ -2,6 +2,8 @@ include $(GOROOT)/src/Make.inc
 
 TARG=javascriptcore
 CGOFILES=\
+	base.go \
+	context.go \
 	string.go \
 	javascriptcore.go
 CGO_OFILES=callback.o
