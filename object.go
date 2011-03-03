@@ -15,6 +15,34 @@ func release_jsstringref_array( refs []C.JSStringRef ) {
 	}
 }
 
+func (ctx *Context) MakeRegExp( regex string ) (*Object,*Value) {
+	var exception C.JSValueRef
+
+	param := ctx.NewStringValue( regex )
+
+	ret := C.JSObjectMakeRegExp( ctx.value, 
+		C.size_t(1),
+		(*C.JSValueRef)( unsafe.Pointer( &param ) ),
+		&exception )
+	if exception != nil {
+		return nil, (*Value)(unsafe.Pointer(exception))
+	}
+	return (*Object)(unsafe.Pointer(ret)), nil
+}
+
+func (ctx *Context) MakeRegExpFromValues( parameters []*Value ) (*Object,*Value) {
+	var exception C.JSValueRef
+
+	ret := C.JSObjectMakeRegExp( ctx.value, 
+		C.size_t(len(parameters)),
+		(*C.JSValueRef)( unsafe.Pointer( &parameters[0] ) ),
+		&exception )
+	if exception != nil {
+		return nil, (*Value)(unsafe.Pointer(exception))
+	}
+	return (*Object)(unsafe.Pointer(ret)), nil
+}
+
 func (ctx *Context) MakeFunction(name string, parameters []string, body string, source_url string, starting_line_number int ) (*Object,*Value) {
 	Cname := ctx.NewString( name )
 	defer Cname.Release()
@@ -168,5 +196,20 @@ func (ctx *Context) CallAsFunction( obj *Object, thisObject *Object, parameters 
 func (ctx *Context) IsConstructor(obj *Object) bool {
 	ret := C.JSObjectIsConstructor( ctx.value, C.JSObjectRef(unsafe.Pointer(obj)) )
 	return bool(ret)
+}
+
+func (ctx *Context) CallAsConstructor( obj *Object, parameters []*Value ) (*Value,*Value) {
+	var exception C.JSValueRef
+
+	ret := C.JSObjectCallAsConstructor( ctx.value, 
+		C.JSObjectRef( unsafe.Pointer(obj) ),	
+		C.size_t( len(parameters) ),
+		(*C.JSValueRef)( unsafe.Pointer( &parameters[0]) ),
+		&exception )
+	if exception != nil {
+		return nil, (*Value)(unsafe.Pointer(exception))
+	}
+
+	return (*Value)(unsafe.Pointer(ret)), nil
 }
 
