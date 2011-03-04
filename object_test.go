@@ -7,7 +7,7 @@ import(
 
 func TestMakeFunctionWithCallback(t *testing.T) {
 	var flag bool
-	callback := func (ctx *js.Context, obj *js.Object, thisObject *js.Object ) (*js.Value, *js.Value){
+	callback := func (ctx *js.Context, obj *js.Object, thisObject *js.Object, _ []*js.Value ) (*js.Value, *js.Value){
 		flag = true
 		return nil, nil
 	}
@@ -15,18 +15,46 @@ func TestMakeFunctionWithCallback(t *testing.T) {
 	ctx := js.NewContext()
 	defer ctx.Release()
 
-	fn := ctx.MakeFunctionWithCallback( "foo", callback )
+	fn := ctx.MakeFunctionWithCallback( callback )
 	if fn == nil {
 		t.Errorf( "ctx.MakeFunctionWithCallback failed" )
 		return
 	}
-	defer ctx.ReleaseFunctionWithCallback( fn )
 	if !ctx.IsFunction( fn ) {
 		t.Errorf( "ctx.MakeFunctionWithCallback returned value that is not a function" )
+	}
+	if ctx.ToStringOrDie( fn.GetValue() ) != "nativecallback" {
+		t.Errorf( "ctx.MakeFunctionWithCallback returned value that does not convert to property string" )
 	}
 	ctx.CallAsFunction( fn, nil, []*js.Value{} )
 	if !flag {
 		t.Errorf( "Native function did not execute" )
+	}
+}
+
+func TestMakeFunctionWithCallback2(t *testing.T) {
+	callback := func (ctx *js.Context, obj *js.Object, thisObject *js.Object, args []*js.Value ) (*js.Value, *js.Value){
+		if len(args)!=2 {
+			return nil, nil
+		}
+
+		a := ctx.ToNumberOrDie( args[0] )
+		b := ctx.ToNumberOrDie( args[1] )
+		return ctx.NewNumberValue( a + b ), nil
+	}
+
+	ctx := js.NewContext()
+	defer ctx.Release()
+
+	fn := ctx.MakeFunctionWithCallback( callback )
+	a := ctx.NewNumberValue( 1.5 )
+	b := ctx.NewNumberValue( 3.0 )
+	val, err := ctx.CallAsFunction( fn, nil, []*js.Value{ a, b } )
+	if err != nil || val == nil {
+		t.Errorf( "Error executing native function" )
+	}
+	if ctx.ToNumberOrDie(val)!=4.5 {
+		t.Errorf( "Native function did not return the correct value" )
 	}
 }
 

@@ -4,24 +4,51 @@
 #include "_cgo_export.h"
 #include "callback.h"
 
-static JSValueRef JSObjectCallAsFunctionCallback_trampoline(
-	JSContextRef ctx, JSObjectRef function, 
-	JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], 
-	JSValueRef* exception)
+static JSValueRef nativecallback_CallAsFunction(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
 {
-	assert( ctx );
-	assert( function );
+	assert( exception );
 
-	JSObjectCallAsFunctionCallback_go( ctx, function, thisObject, argumentCount, arguments, exception );
+	// Routine must set private to callback point in Go
+	void* data = JSObjectGetPrivate( function );
+	JSValueRef ret = nativecallback_CallAsFunction_go( data, (void*)ctx, (void*)function, (void*)thisObject, argumentCount, arguments, (void**)exception );
+	assert( *exception==NULL || (*exception && !ret) );
+	return ret;
+}
+
+static JSValueRef nativecallback_ObjectConvertToType(JSContextRef ctx, JSObjectRef object, JSType type, JSValueRef* exception)
+{
+	if ( type == kJSTypeString ) {
+		JSStringRef str = JSStringCreateWithUTF8CString( "nativecallback" );
+		JSValueRef ret = JSValueMakeString( ctx, str );
+		JSStringRelease( str );
+		return ret;
+	}
+
 	return 0;
 }
 
-JSObjectRef JSObjectMakeFunctionWithCallback_wka( JSContextRef ctx, JSStringRef name )
+JSClassRef JSClassDefinition_NativeCallback()
 {
-	assert( ctx );
-	assert( name );
+	static JSClassDefinition def = {
+		0,
+		kJSClassAttributeNone,
+		"nativecallback",
+		NULL,
+        	NULL, // staticValues;
+    		NULL, // staticFunctions;
+		NULL, // initialize;
+		NULL, // finalize;
+		NULL, // hasProperty;
+		NULL, // getProperty;
+		NULL, // setProperty;
+		NULL, // deleteProperty;
+		NULL, // getPropertyNames;
+		nativecallback_CallAsFunction, // callAsFunction;
+		NULL, // callAsConstructor;
+		NULL, // hasInstance;
+		nativecallback_ObjectConvertToType // convertToType;
+	};
 
-	JSObjectRef ref = JSObjectMakeFunctionWithCallback( ctx, name, JSObjectCallAsFunctionCallback_trampoline );
-	return ref;
+	return JSClassCreate( &def );
 }
 

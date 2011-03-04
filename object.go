@@ -5,6 +5,8 @@ package javascriptcore
 // #include <JavaScriptCore/JSObjectRef.h>
 // #include "callback.h"
 import "C"
+import "os"
+import "runtime"
 import "unsafe"
 
 func release_jsstringref_array( refs []C.JSStringRef ) {
@@ -15,56 +17,40 @@ func release_jsstringref_array( refs []C.JSStringRef ) {
 	}
 }
 
-type GoFunctionCallback func(ctx *Context, obj *Object, thisObject *Object) (ret *Value, err *Value)
+var nativecallback C.JSClassRef
+var nativecallback_typ runtime.Type
 
-var (
-	fn_callbacks = make( map[uintptr] GoFunctionCallback )
-)
-
-func (ctx *Context) MakeFunctionWithCallback( name string, callback GoFunctionCallback ) *Object {
-	// Convert string to form accepted by JavaScriptCore
-	stringRef := (*String)(nil)
-	if name != "" {
-		stringRef = NewString( name )
-		defer stringRef.Release()
+func init() {
+	// Create the class definition for JavaScriptCore
+	nativecallback = C.JSClassDefinition_NativeCallback()
+	if nativecallback == nil {
+		panic( os.ENOMEM )
 	}
 
-	ret := C.JSObjectMakeFunctionWithCallback_wka( C.JSContextRef(unsafe.Pointer(ctx)), C.JSStringRef(unsafe.Pointer(stringRef)) )
-	if ret != nil {
-		fn_callbacks[ uintptr(unsafe.Pointer(ret)) ] = callback
-		C.JSValueProtect( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef( unsafe.Pointer( ret ) ) )
-	}
+	// Get the Go type information to recreate the callback
+	var dummy GoFunctionCallback
+	nativecallback_typ, _ = unsafe.Reflect( dummy )
+}
+
+type GoFunctionCallback func(ctx *Context, obj *Object, thisObject *Object, arguments []*Value) (ret *Value, err *Value)
+
+func (ctx *Context) MakeFunctionWithCallback( callback GoFunctionCallback ) *Object {
+	_, addr := unsafe.Reflect( callback )
+
+	ret := C.JSObjectMake( C.JSContextRef(unsafe.Pointer(ctx)), nativecallback, addr )
 	return (*Object)(unsafe.Pointer(ret))
 }
 
-func (ctx *Context) ReleaseFunctionWithCallback( obj *Object ) {
-	// clear out the map of callbacks
-	fn_callbacks[ uintptr(unsafe.Pointer(obj)) ] = nil, false
-	// unprotect the value
-	C.JSValueUnprotect( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef( unsafe.Pointer( obj ) ) )
-}
-
-//export JSObjectCallAsFunctionCallback_go
-func JSObjectCallAsFunctionCallback_go( ctx unsafe.Pointer, obj unsafe.Pointer, thisObject unsafe.Pointer, argumentCount uint16, arguments unsafe.Pointer, exception *unsafe.Pointer ) unsafe.Pointer {
-// obj unsafe.Pointer, thisObject unsafe.Pointer, argumentCount int, ret, unsafe.Pointer, exception unsafe.Pointer )  {
-
-	callback, ok := fn_callbacks[ uintptr(unsafe.Pointer(obj)) ]
-	if !ok {
-		// TODO:  return error
-		return nil
-	}
-
-	ret, err := callback( (*Context)(unsafe.Pointer(ctx)),
-		(*Object)(unsafe.Pointer(obj)),
-		(*Object)(unsafe.Pointer(thisObject)) )
-		
+//export nativecallback_CallAsFunction_go
+func nativecallback_CallAsFunction_go( data unsafe.Pointer, ctx unsafe.Pointer, obj unsafe.Pointer, thisObject unsafe.Pointer, argumentCount uint, arguments unsafe.Pointer, exception *unsafe.Pointer ) unsafe.Pointer {
+	ret, err := unsafe.Unreflect( nativecallback_typ, data ).(GoFunctionCallback)(
+		(*Context)(ctx), (*Object)(obj), (*Object)(thisObject), (*[1<<14]*Value)(arguments)[0:argumentCount] )
 	if err != nil {
-		*exception = unsafe.Pointer( err )
+		*exception = unsafe.Pointer(err)
 		return nil
 	}
 
-	*exception = nil
-	return unsafe.Pointer( ret )
+	return unsafe.Pointer(ret)
 }
 
 func (ctx *Context) MakeRegExp( regex string ) (*Object,*Value) {
