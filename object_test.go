@@ -5,6 +5,12 @@ import(
 	js "javascriptcore"
 )
 
+type reflect_object struct {
+	I	int
+	F	float64
+	S	string
+}
+
 func TestMakeFunctionWithCallback(t *testing.T) {
 	var flag bool
 	callback := func (ctx *js.Context, obj *js.Object, thisObject *js.Object, _ []*js.Value ) (*js.Value, *js.Value){
@@ -55,6 +61,36 @@ func TestMakeFunctionWithCallback2(t *testing.T) {
 	}
 	if ctx.ToNumberOrDie(val)!=4.5 {
 		t.Errorf( "Native function did not return the correct value" )
+	}
+}
+
+func TestMakeNativeObject(t *testing.T) {
+	obj := &reflect_object{ 2, 3.0, "four" }
+
+	ctx := js.NewContext()
+	defer ctx.Release()
+
+	v := ctx.MakeNativeObject( obj )
+	ctx.ObjectSetProperty( ctx.GlobalObject(), "n", v.GetValue(), 0 )
+
+	// Following script access should be successful
+	ret, err := ctx.EvaluateScript( "n.F", nil, "./testing.go", 1 )
+	if err != nil || ret == nil {
+		t.Errorf( "ctx.EvaluateScript returned an error (or did not return a result)" )
+		return
+	}
+	num := ctx.ToNumberOrDie( ret )
+	if num != 3.0 {
+		t.Errorf( "ctx.EvaluateScript incorrect value when accessing native object's field." )
+	}
+
+	// following script access should fail
+	ret, err = ctx.EvaluateScript( "n.noexist", nil, "./testing.go", 1 )
+	if err != nil || ret == nil {
+		t.Errorf( "ctx.EvaluateScript returned an error (or did not return a result)" )
+	}
+	if !ctx.IsUndefined( ret ) {
+		t.Errorf( "ctx.EvaluateScript did not return 'undefined' result when accessing native object's non-existent field." )
 	}
 }
 
