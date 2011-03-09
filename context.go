@@ -2,7 +2,6 @@ package javascriptcore
 
 // #include <stdlib.h>
 // #include <JavaScriptCore/JSContextRef.h>
-// #include "callback.h"
 import "C"
 import "unsafe"
 
