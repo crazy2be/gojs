@@ -79,6 +79,9 @@ func TestMakeNativeObject(t *testing.T) {
 		t.Errorf( "ctx.EvaluateScript returned an error (or did not return a result)" )
 		return
 	}
+	if !ctx.IsNumber( ret ) {
+		t.Errorf( "ctx.EvaluateScript did not return 'number' result when accessing native object's non-existent field." )
+	}
 	num := ctx.ToNumberOrDie( ret )
 	if num != 3.0 {
 		t.Errorf( "ctx.EvaluateScript incorrect value when accessing native object's field." )
@@ -91,6 +94,19 @@ func TestMakeNativeObject(t *testing.T) {
 	}
 	if !ctx.IsUndefined( ret ) {
 		t.Errorf( "ctx.EvaluateScript did not return 'undefined' result when accessing native object's non-existent field." )
+	}
+
+	// following script access should succeed
+	ret, err = ctx.EvaluateScript( "n.S", nil, "./testing.go", 1 )
+	if err != nil || ret == nil {
+		t.Errorf( "ctx.EvaluateScript returned an error (or did not return a result)" )
+	}
+	if !ctx.IsString( ret ) {
+		t.Errorf( "ctx.EvaluateScript did not return 'string' result when accessing native object's non-existent field." )
+	}
+	str := ctx.ToStringOrDie( ret )
+	if str != "four" {
+		t.Errorf( "ctx.EvaluateScript incorrect value when accessing native object's field." )
 	}
 }
 
