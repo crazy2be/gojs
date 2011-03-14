@@ -51,7 +51,7 @@ func TestMakeArray2(t *testing.T) {
 	if !ctx.IsObject( val.ToValue() ) {
 		t.Errorf( "ctx.MakeArray failed to return an object (%v)", ctx.ValueType( val.ToValue() ) )
 	}
-	prop, err := ctx.ObjectGetProperty( val, "length" )
+	prop, err := ctx.GetProperty( val, "length" )
 	if err != nil || prop == nil {
 		t.Errorf( "ctx.MakeArray returned object without 'length' property" )
 	} else {
@@ -123,7 +123,7 @@ func TestMakeError(t *testing.T) {
 		if err != nil {
 			t.Errorf( "ctx.MakeError failed on string %v with error %v", item, err )
 		}
-		v, exc := ctx.ObjectGetProperty( r, "name" )
+		v, exc := ctx.GetProperty( r, "name" )
 		if exc != nil || v == nil {
 			t.Errorf( "ctx.MakeError returned object without 'message' property" )
 		} else {
@@ -134,7 +134,7 @@ func TestMakeError(t *testing.T) {
 				t.Errorf( "JavaScript error object and input string don't match (%v, %v)", item, ctx.ToStringOrDie( v ) )
 			}
 		}
-		v, exc = ctx.ObjectGetProperty( r, "message" )
+		v, exc = ctx.GetProperty( r, "message" )
 		if exc != nil || v == nil {
 			t.Errorf( "ctx.MakeError returned object without 'message' property" )
 		} else {

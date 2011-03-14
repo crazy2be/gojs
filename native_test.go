@@ -169,7 +169,7 @@ func TestMakeNativeObject(t *testing.T) {
 	defer ctx.Release()
 
 	v := ctx.MakeNativeObject( obj )
-	ctx.ObjectSetProperty( ctx.GlobalObject(), "n", v.ToValue(), 0 )
+	ctx.SetProperty( ctx.GlobalObject(), "n", v.ToValue(), 0 )
 
 	// Following script access should be successful
 	ret, err := ctx.EvaluateScript( "n.F", nil, "./testing.go", 1 )

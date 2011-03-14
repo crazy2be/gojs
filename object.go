@@ -165,10 +165,7 @@ func (ctx *Context) SetPrototype(obj *Object, rhs *Value) {
 		C.JSObjectRef(unsafe.Pointer(obj)), C.JSValueRef(unsafe.Pointer(rhs)) )
 }
 
-type PropertyNameArray struct {
-}
-
-func (ctx *Context) ObjectHasProperty(obj *Object, name string) bool {
+func (ctx *Context) HasProperty(obj *Object, name string) bool {
 	jsstr := NewString( name )
 	defer jsstr.Release()
 
@@ -176,7 +173,7 @@ func (ctx *Context) ObjectHasProperty(obj *Object, name string) bool {
 	return bool(ret)
 }
 
-func (ctx *Context) ObjectGetProperty(obj *Object, name string) (*Value,*Value) {
+func (ctx *Context) GetProperty(obj *Object, name string) (*Value,*Value) {
 	jsstr := NewString( name )
 	defer jsstr.Release()
 
@@ -190,7 +187,7 @@ func (ctx *Context) ObjectGetProperty(obj *Object, name string) (*Value,*Value) 
 	return (*Value)(unsafe.Pointer(ret)), nil
 }
 
-func (ctx *Context) ObjectGetPropertyAtIndex(obj *Object, index uint16) (*Value,*Value) {
+func (ctx *Context) GetPropertyAtIndex(obj *Object, index uint16) (*Value,*Value) {
 	var exception C.JSValueRef
 
 	ret := C.JSObjectGetPropertyAtIndex( C.JSContextRef(unsafe.Pointer(ctx)), C.JSObjectRef(unsafe.Pointer(obj)), C.unsigned(index), &exception )
@@ -201,7 +198,7 @@ func (ctx *Context) ObjectGetPropertyAtIndex(obj *Object, index uint16) (*Value,
 	return (*Value)(unsafe.Pointer(ret)), nil
 }
 
-func (ctx *Context) ObjectSetProperty(obj *Object, name string, rhs *Value, attributes uint8) *Value {
+func (ctx *Context) SetProperty(obj *Object, name string, rhs *Value, attributes uint8) *Value {
 	jsstr := NewString( name )
 	defer jsstr.Release()
 
@@ -216,7 +213,7 @@ func (ctx *Context) ObjectSetProperty(obj *Object, name string, rhs *Value, attr
 	return nil
 }
 
-func (ctx *Context) ObjectSetPropertyAtIndex(obj *Object, index uint16, rhs *Value) *Value {
+func (ctx *Context) SetPropertyAtIndex(obj *Object, index uint16, rhs *Value) *Value {
 	var exception C.JSValueRef
 
 	C.JSObjectSetPropertyAtIndex( C.JSContextRef(unsafe.Pointer(ctx)), C.JSObjectRef(unsafe.Pointer(obj)), C.unsigned(index), 
@@ -228,7 +225,7 @@ func (ctx *Context) ObjectSetPropertyAtIndex(obj *Object, index uint16, rhs *Val
 	return nil
 }
 
-func (ctx *Context) ObjectDeleteProperty(obj *Object, name string ) (bool,*Value) {
+func (ctx *Context) DeleteProperty(obj *Object, name string ) (bool,*Value) {
 	jsstr := NewString( name )
 	defer jsstr.Release()
 
@@ -322,6 +319,9 @@ const (
 	ClassAttributeNone = 0
 	ClassAttributeNoAutomaticPrototype = 1 << 1
 )
+
+type PropertyNameArray struct {
+}
 
 func (ctx *Context) CopyPropertyNames(obj *Object) *PropertyNameArray {
 	ret := C.JSObjectCopyPropertyNames( C.JSContextRef(unsafe.Pointer(ctx)), C.JSObjectRef(unsafe.Pointer(obj)) )
