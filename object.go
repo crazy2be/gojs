@@ -15,6 +15,51 @@ func release_jsstringref_array( refs []C.JSStringRef ) {
 	}
 }
 
+func (ctx *Context) MakeObject() (*Object) {
+	ret := C.JSObjectMake( C.JSContextRef(unsafe.Pointer(ctx)), nil, nil )
+	return (*Object)(unsafe.Pointer(ret))
+}
+
+func (ctx *Context) MakeDate() (*Object,*Value) {
+	var exception C.JSValueRef
+
+	ret := C.JSObjectMakeDate( C.JSContextRef(unsafe.Pointer(ctx)), 
+		0, nil,
+		&exception )
+	if exception != nil {
+		return nil, (*Value)(unsafe.Pointer(exception))
+	}
+	return (*Object)(unsafe.Pointer(ret)), nil
+}
+
+func (ctx *Context) MakeDateWithMilliseconds( milliseconds float64 ) (*Object,*Value) {
+	var exception C.JSValueRef
+
+	param := ctx.NewNumberValue( milliseconds )
+
+	ret := C.JSObjectMakeDate( C.JSContextRef(unsafe.Pointer(ctx)), 
+		C.size_t(1), (*C.JSValueRef)( unsafe.Pointer( &param ) ),
+		&exception )
+	if exception != nil {
+		return nil, (*Value)(unsafe.Pointer(exception))
+	}
+	return (*Object)(unsafe.Pointer(ret)), nil
+}
+
+func (ctx *Context) MakeDateWithString( date string ) (*Object,*Value) {
+	var exception C.JSValueRef
+
+	param := ctx.NewStringValue( date )
+
+	ret := C.JSObjectMakeDate( C.JSContextRef(unsafe.Pointer(ctx)), 
+		C.size_t(1), (*C.JSValueRef)( unsafe.Pointer( &param ) ),
+		&exception )
+	if exception != nil {
+		return nil, (*Value)(unsafe.Pointer(exception))
+	}
+	return (*Object)(unsafe.Pointer(ret)), nil
+}
+
 func (ctx *Context) MakeError( message string ) (*Object,*Value) {
 	var exception C.JSValueRef
 

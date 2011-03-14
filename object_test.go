@@ -5,6 +5,67 @@ import(
 	js "javascriptcore"
 )
 
+func TestMakeObject(t *testing.T) {
+	ctx := js.NewContext()
+	defer ctx.Release()
+
+	val := ctx.MakeObject()
+	if val == nil {
+		t.Errorf( "ctx.MakeObject returned a nil poitner" )
+	}
+	if !ctx.IsObject( val.GetValue() ) {
+		t.Errorf( "ctx.MakeObject failed to return an object (%v)", ctx.ValueType( val.GetValue() ) )
+	}
+}	
+
+func TestMakeDate(t *testing.T) {
+	ctx := js.NewContext()
+	defer ctx.Release()
+
+	val, err := ctx.MakeDate()
+	if err != nil {
+		t.Errorf( "ctx.MakeDate returned an exception (%v)", ctx.ToStringOrDie(err) )
+	}
+	if val == nil {
+		t.Errorf( "ctx.MakeDate returned a nil poitner" )
+	}
+	if !ctx.IsObject( val.GetValue() ) {
+		t.Errorf( "ctx.MakeDate failed to return an object (%v)", ctx.ValueType( val.GetValue() ) )
+	}
+}	
+
+func TestMakeDateWithMilliseconds(t *testing.T) {
+	ctx := js.NewContext()
+	defer ctx.Release()
+
+	val, err := ctx.MakeDateWithMilliseconds( 3600000 )
+	if err != nil {
+		t.Errorf( "ctx.MakeDateWithMilliseconds returned an exception (%v)", ctx.ToStringOrDie(err) )
+	}
+	if val == nil {
+		t.Errorf( "ctx.MakeDateWithMilliseconds returned a nil poitner" )
+	}
+	if !ctx.IsObject( val.GetValue() ) {
+		t.Errorf( "ctx.MakeDateWithMilliseconds failed to return an object (%v)", ctx.ValueType( val.GetValue() ) )
+	}
+}	
+
+func TestMakeDateWithString(t *testing.T) {
+	ctx := js.NewContext()
+	defer ctx.Release()
+
+	val, err := ctx.MakeDateWithString( "01-Oct-2010" )
+	if err != nil {
+		t.Errorf( "ctx.MakeDateWithString returned an exception (%v)", ctx.ToStringOrDie(err) )
+	}
+	if val == nil {
+		t.Errorf( "ctx.MakeDateWithString returned a nil poitner" )
+	}
+	if !ctx.IsObject( val.GetValue() ) {
+		t.Errorf( "ctx.MakeDateWithString failed to return an object (%v)", ctx.ValueType( val.GetValue() ) )
+	}
+}	
+
 func TestMakeError(t *testing.T) {
 	tests := []string{ "test error 1", "test error 2" }
 
