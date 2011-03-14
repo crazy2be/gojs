@@ -117,7 +117,7 @@ func (ctx *Context) ToNumber( ref *Value ) (num float64,err *Value) {
 func (ctx *Context) ToNumberOrDie( ref *Value ) float64 {
 	ret, err := ctx.ToNumber( ref )
 	if err!=nil {
-		panic( err )
+		panic( newPanicError(ctx,err) )
 	}
 	return ret
 }
@@ -140,7 +140,7 @@ func (ctx *Context) ToString( ref *Value ) (str string, err *Value) {
 func (ctx *Context) ToStringOrDie( ref *Value ) string {
 	str, err := ctx.ToString( ref )
 	if err!=nil {
-		panic( err )
+		panic( newPanicError(ctx,err) )
 	}
 	return str
 }
@@ -161,7 +161,7 @@ func (ctx *Context) ToObject( ref *Value ) (obj *Object, err *Value) {
 func (ctx *Context) ToObjectOrDie( ref *Value ) *Object {
 	ret, err := ctx.ToObject( ref )
 	if err!=nil {
-		panic( err )
+		panic( newPanicError(ctx,err) )
 	}
 	return ret
 }

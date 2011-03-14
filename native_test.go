@@ -1,8 +1,7 @@
-package javascriptcore_test
+package javascriptcore
 
 import(
 	"testing"
-	js "javascriptcore"
 	"os"
 )
 
@@ -14,12 +13,12 @@ type reflect_object struct {
 
 func TestNewFunctionWithCallback(t *testing.T) {
 	var flag bool
-	callback := func (ctx *js.Context, obj *js.Object, thisObject *js.Object, _ []*js.Value ) (*js.Value){
+	callback := func (ctx *Context, obj *Object, thisObject *Object, _ []*Value ) (*Value){
 		flag = true
 		return nil
 	}
 
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	fn := ctx.NewFunctionWithCallback( callback )
@@ -33,14 +32,14 @@ func TestNewFunctionWithCallback(t *testing.T) {
 	if ctx.ToStringOrDie( fn.ToValue() ) != "nativecallback" {
 		t.Errorf( "ctx.NewFunctionWithCallback returned value that does not convert to property string" )
 	}
-	ctx.CallAsFunction( fn, nil, []*js.Value{} )
+	ctx.CallAsFunction( fn, nil, []*Value{} )
 	if !flag {
 		t.Errorf( "Native function did not execute" )
 	}
 }
 
 func TestNewFunctionWithCallback2(t *testing.T) {
-	callback := func (ctx *js.Context, obj *js.Object, thisObject *js.Object, args []*js.Value ) (*js.Value){
+	callback := func (ctx *Context, obj *Object, thisObject *Object, args []*Value ) (*Value){
 		if len(args)!=2 {
 			return nil
 		}
@@ -50,13 +49,13 @@ func TestNewFunctionWithCallback2(t *testing.T) {
 		return ctx.NewNumberValue( a + b )
 	}
 
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	fn := ctx.NewFunctionWithCallback( callback )
 	a := ctx.NewNumberValue( 1.5 )
 	b := ctx.NewNumberValue( 3.0 )
-	val, err := ctx.CallAsFunction( fn, nil, []*js.Value{ a, b } )
+	val, err := ctx.CallAsFunction( fn, nil, []*Value{ a, b } )
 	if err != nil || val == nil {
 		t.Errorf( "Error executing native callback" )
 	}
@@ -66,19 +65,19 @@ func TestNewFunctionWithCallback2(t *testing.T) {
 }
 
 func TestNewFunctionWithCallbackPanic(t *testing.T) {
-	var callbacks = []js.GoFunctionCallback{}
+	var callbacks = []GoFunctionCallback{}
 	var error_msgs = []string{ "error from go!", os.ENOMEM.String() }
 
 	callbacks = append( callbacks,
-		func (ctx *js.Context, obj *js.Object, thisObject *js.Object, _ []*js.Value ) (*js.Value,) {
+		func (ctx *Context, obj *Object, thisObject *Object, _ []*Value ) (*Value,) {
 			panic( "error from go!" )
 			return nil } )
 	callbacks = append( callbacks,
-		func (ctx *js.Context, obj *js.Object, thisObject *js.Object, _ []*js.Value ) (*js.Value,) {
+		func (ctx *Context, obj *Object, thisObject *Object, _ []*Value ) (*Value,) {
 			panic( os.ENOMEM )
 			return nil } )
 
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	for index, callback := range callbacks {
@@ -94,7 +93,7 @@ func TestNewFunctionWithCallbackPanic(t *testing.T) {
 	if ctx.ToStringOrDie( fn.ToValue() ) != "nativecallback" {
 		t.Errorf( "ctx.NewFunctionWithCallback returned value that does not convert to property string" )
 	}
-	val, err := ctx.CallAsFunction( fn, nil, []*js.Value{} )
+	val, err := ctx.CallAsFunction( fn, nil, []*Value{} )
 	if val != nil {
 		t.Errorf( "ctx.NewFunctionWithCallback that panicked returned a value" )
 	}
@@ -115,7 +114,7 @@ func TestNativeFunction(t *testing.T) {
 		flag = true
 	}
 
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	fn := ctx.NewFunctionWithNative( callback )
@@ -129,7 +128,7 @@ func TestNativeFunction(t *testing.T) {
 	if ctx.ToStringOrDie( fn.ToValue() ) != "nativefunction" {
 		t.Errorf( "ctx.nativefunction returned value that does not convert to property string" )
 	}
-	ctx.CallAsFunction( fn, nil, []*js.Value{} )
+	ctx.CallAsFunction( fn, nil, []*Value{} )
 	if !flag {
 		t.Errorf( "Native function did not execute" )
 	}
@@ -140,7 +139,7 @@ func TestNativeFunction2(t *testing.T) {
 		return a + float64(b)
 	}
 
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	fn := ctx.NewFunctionWithNative( callback )
@@ -153,7 +152,7 @@ func TestNativeFunction2(t *testing.T) {
 	}
 	a := ctx.NewNumberValue( 1.5 )
 	b := ctx.NewNumberValue( 3.0 )
-	val, err := ctx.CallAsFunction( fn, nil, []*js.Value{ a, b } )
+	val, err := ctx.CallAsFunction( fn, nil, []*Value{ a, b } )
 	if err != nil || val == nil {
 		t.Errorf( "Error executing native function (%v)", ctx.ToStringOrDie(err) )
 	}
@@ -165,7 +164,7 @@ func TestNativeFunction2(t *testing.T) {
 func TestNewNativeObject(t *testing.T) {
 	obj := &reflect_object{ 2, 3.0, "four" }
 
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	v := ctx.NewNativeObject( obj )

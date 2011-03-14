@@ -1,8 +1,7 @@
-package javascriptcore_test
+package javascriptcore
 
 import(
 	"testing"
-	js "javascriptcore"
 )
 
 type BaseTests struct {
@@ -13,19 +12,19 @@ type BaseTests struct {
 
 var(
 	basetests = []BaseTests{
-		{ "return 2341234 \"asdf\"", js.TypeUndefined, "" },	// syntax error
-		{ "1.5", js.TypeNumber, "1.5" },
-		{ "1.5 + 3.0", js.TypeNumber, "4.5" },
-		{ "'a' + 'b'", js.TypeString, "ab" } }
+		{ "return 2341234 \"asdf\"", TypeUndefined, "" },	// syntax error
+		{ "1.5", TypeNumber, "1.5" },
+		{ "1.5 + 3.0", TypeNumber, "4.5" },
+		{ "'a' + 'b'", TypeString, "ab" } }
 )
 
 func TestBase(t *testing.T) {
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 }
 
 func TestEvaluateScript(t *testing.T) {
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	for index, item := range basetests {
@@ -57,7 +56,7 @@ func TestEvaluateScript(t *testing.T) {
 }
 
 func TestCheckScript(t *testing.T) {
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	for _, item := range basetests {
@@ -72,7 +71,7 @@ func TestCheckScript(t *testing.T) {
 }
 
 func TestGarbageCollect(t *testing.T) {
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	ctx.GarbageCollect()

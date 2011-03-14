@@ -6,6 +6,7 @@ CGOFILES=\
 	context.go \
 	native.go \
 	object.go \
+	panic.go \
 	string.go \
 	value.go 
 CGO_OFILES=callback.o

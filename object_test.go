@@ -1,12 +1,11 @@
-package javascriptcore_test
+package javascriptcore
 
 import(
 	"testing"
-	js "javascriptcore"
 )
 
 func TestNewObject(t *testing.T) {
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	val := ctx.NewObject()
@@ -19,7 +18,7 @@ func TestNewObject(t *testing.T) {
 }
 
 func TestNewArray(t *testing.T) {
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	val, err := ctx.NewArray(nil)
@@ -35,13 +34,13 @@ func TestNewArray(t *testing.T) {
 }	
 
 func TestNewArray2(t *testing.T) {
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	a := ctx.NewNumberValue( 1.5 )
 	b := ctx.NewNumberValue( 3.0 )
 
-	val, err := ctx.NewArray( []*js.Value{ a, b } )
+	val, err := ctx.NewArray( []*Value{ a, b } )
 	if err != nil {
 		t.Errorf( "ctx.NewArray returned an exception (%v)", ctx.ToStringOrDie(err) )
 	}
@@ -65,7 +64,7 @@ func TestNewArray2(t *testing.T) {
 }	
 
 func TestNewDate(t *testing.T) {
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	val, err := ctx.NewDate()
@@ -81,7 +80,7 @@ func TestNewDate(t *testing.T) {
 }	
 
 func TestNewDateWithMilliseconds(t *testing.T) {
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	val, err := ctx.NewDateWithMilliseconds( 3600000 )
@@ -97,7 +96,7 @@ func TestNewDateWithMilliseconds(t *testing.T) {
 }	
 
 func TestNewDateWithString(t *testing.T) {
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	val, err := ctx.NewDateWithString( "01-Oct-2010" )
@@ -115,7 +114,7 @@ func TestNewDateWithString(t *testing.T) {
 func TestNewError(t *testing.T) {
 	tests := []string{ "test error 1", "test error 2" }
 
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	for _, item := range tests {
@@ -151,7 +150,7 @@ func TestNewError(t *testing.T) {
 func TestNewRegExp(t *testing.T) {
 	tests := []string{ "\\bt[a-z]+\\b", "[0-9]+(\\.[0-9]*)?" }
 
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	for _, item := range tests {
@@ -168,11 +167,11 @@ func TestNewRegExp(t *testing.T) {
 func TestNewRegExpFromValues(t *testing.T) {
 	tests := []string{ "\\bt[a-z]+\\b", "[0-9]+(\\.[0-9]*)?" }
 
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	for _, item := range tests {
-		params := []*js.Value{ ctx.NewStringValue( item ) }
+		params := []*Value{ ctx.NewStringValue( item ) }
 		r, err := ctx.NewRegExpFromValues( params )
 		if err != nil {
 			t.Errorf( "ctx.NewRegExp failed on string %v with error %v", item, err )
@@ -184,7 +183,7 @@ func TestNewRegExpFromValues(t *testing.T) {
 }
 
 func TestNewFunction(t *testing.T) {
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	fn, err := ctx.NewFunction( "myfun", []string{ "a", "b" }, "return a+b;", "./testing.go", 1 )
@@ -197,7 +196,7 @@ func TestNewFunction(t *testing.T) {
 }
 
 func TestNewCallAsFunction(t *testing.T) {
-	ctx := js.NewContext()
+	ctx := NewContext()
 	defer ctx.Release()
 
 	fn, err := ctx.NewFunction( "myfun", []string{ "a", "b" }, "return a+b;", "./testing.go", 1 )
@@ -207,7 +206,7 @@ func TestNewCallAsFunction(t *testing.T) {
 	
 	a := ctx.NewNumberValue( 1.5 )
 	b := ctx.NewNumberValue( 3.0 )
-	val, err := ctx.CallAsFunction( fn, nil, []*js.Value{ a, b } )
+	val, err := ctx.CallAsFunction( fn, nil, []*Value{ a, b } )
 	if err != nil {
 		t.Errorf( "ctx.CallAsFunction failed with %v", err )
 	}
