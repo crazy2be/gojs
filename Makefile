@@ -4,6 +4,7 @@ TARG=javascriptcore
 CGOFILES=\
 	base.go \
 	context.go \
+	native.go \
 	object.go \
 	string.go \
 	javascriptcore.go

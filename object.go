@@ -5,9 +5,6 @@ package javascriptcore
 // #include <JavaScriptCore/JSObjectRef.h>
 // #include "callback.h"
 import "C"
-import "os"
-import "reflect"
-import "runtime"
 import "unsafe"
 
 func release_jsstringref_array( refs []C.JSStringRef ) {
@@ -18,97 +15,18 @@ func release_jsstringref_array( refs []C.JSStringRef ) {
 	}
 }
 
-var nativecallback C.JSClassRef
-var nativecallback_typ interface{}
-var nativeobject C.JSClassRef
+func (ctx *Context) MakeError( message string ) (*Object,*Value) {
+	var exception C.JSValueRef
 
-func init() {
-	// Create the class definition for JavaScriptCore
-	nativecallback = C.JSClassDefinition_NativeCallback()
-	if nativecallback == nil {
-		panic( os.ENOMEM )
+	param := ctx.NewStringValue( message )
+
+	ret := C.JSObjectMakeError( C.JSContextRef(unsafe.Pointer(ctx)), 
+		C.size_t(1), (*C.JSValueRef)( unsafe.Pointer( &param ) ),
+		&exception )
+	if exception != nil {
+		return nil, (*Value)(unsafe.Pointer(exception))
 	}
-
-	// Get the Go type information to recreate the callback
-	var dummy GoFunctionCallback
-	nativecallback_typ, _ = unsafe.Reflect( dummy )
-
-	// Create the class definition for JavaScriptCore
-	nativeobject = C.JSClassDefinition_NativeObject()
-	if nativeobject == nil {
-		panic( os.ENOMEM )
-	}
-}
-
-type GoFunctionCallback func(ctx *Context, obj *Object, thisObject *Object, arguments []*Value) (ret *Value, err *Value)
-
-func (ctx *Context) MakeFunctionWithCallback( callback GoFunctionCallback ) *Object {
-	_, addr := unsafe.Reflect( callback )
-
-	ret := C.JSObjectMake( C.JSContextRef(unsafe.Pointer(ctx)), nativecallback, addr )
-	return (*Object)(unsafe.Pointer(ret))
-}
-
-//export nativecallback_CallAsFunction_go
-func nativecallback_CallAsFunction_go( data unsafe.Pointer, ctx unsafe.Pointer, obj unsafe.Pointer, thisObject unsafe.Pointer, argumentCount uint, arguments unsafe.Pointer, exception *unsafe.Pointer ) unsafe.Pointer {
-	ret, err := unsafe.Unreflect( nativecallback_typ, data ).(GoFunctionCallback)(
-		(*Context)(ctx), (*Object)(obj), (*Object)(thisObject), (*[1<<14]*Value)(arguments)[0:argumentCount] )
-	if err != nil {
-		*exception = unsafe.Pointer(err)
-		return nil
-	}
-
-	return unsafe.Pointer(ret)
-}
-
-func (ctx *Context) MakeNativeObject( obj interface{} ) *Object {
-	// The obj must be a pointer to a struct
-	// TODO:  add error checking code
-
-	typ, addr := unsafe.Reflect( obj )
-	typptr := typ.(*runtime.PtrType)
-	data := C.new_nativeobject_data( unsafe.Pointer(typptr), addr )
-
-	ret := C.JSObjectMake( C.JSContextRef(unsafe.Pointer(ctx)), nativeobject, data )
-	return (*Object)(unsafe.Pointer(ret))
-}
-
-//export nativeobject_GetProperty_go
-func nativecallback_GetProperty_go( data unsafe.Pointer, ctx unsafe.Pointer, _ unsafe.Pointer, propertyName unsafe.Pointer, exception *unsafe.Pointer ) unsafe.Pointer {
-	// Get name of property as a go string
-	name := (*String)(propertyName).String()
-
-	// Reconstruct the object interface
-	obji := unsafe.Unreflect( (*C.nativeobject_data)(data).typ, (*C.nativeobject_data)(data).addr )
-
-	// Drill down through reflect to find the property
-	objv := reflect.NewValue( obji )
-	if ptrvalue, ok := objv.(*reflect.PtrValue); ok {
-		objv = ptrvalue.Elem()
-	}
-	strvalue, ok := objv.(*reflect.StructValue)
-	if !ok {
-		return nil
-	}
-
-	field := strvalue.FieldByName( name )
-	if field == nil {
-		return nil
-	}
-
-	switch field.(type) {
-		case (*reflect.IntValue):
-			r := field.(*reflect.IntValue).Get()
-			return unsafe.Pointer( (*Context)(ctx).NewNumberValue( float64(r) ) )
-		case (*reflect.FloatValue):
-			r := field.(*reflect.FloatValue).Get()
-			return unsafe.Pointer( (*Context)(ctx).NewNumberValue( r ) )
-		case (*reflect.StringValue):
-			r := field.(*reflect.StringValue).Get()
-			return unsafe.Pointer( (*Context)(ctx).NewStringValue( r ) )
-	}
-
-	return nil
+	return (*Object)(unsafe.Pointer(ret)), nil
 }
 
 func (ctx *Context) MakeRegExp( regex string ) (*Object,*Value) {
