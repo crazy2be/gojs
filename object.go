@@ -7,6 +7,9 @@ package javascriptcore
 import "C"
 import "unsafe"
 
+type Object struct {
+}
+
 func release_jsstringref_array( refs []C.JSStringRef ) {
 	for i:=0; i<len(refs); i++ {
 		if refs[i] != nil {
@@ -230,7 +233,7 @@ func (obj *Object) SetPrivate(data unsafe.Pointer) bool {
 	return bool( ret )
 }
 
-func (obj *Object) GetValue() *Value {
+func (obj *Object) ToValue() *Value {
 	return (*Value)(unsafe.Pointer(obj))
 }
 
@@ -283,5 +286,45 @@ func (ctx *Context) CallAsConstructor( obj *Object, parameters []*Value ) (*Valu
 	}
 
 	return (*Value)(unsafe.Pointer(ret)), nil
+}
+
+//=========================================================
+// PropertyNameArray
+//
+
+const (
+	PropertyAttributeNone = 0
+	PropertyAttributeReadOnly     = 1 << 1
+	PropertyAttributeDontEnum     = 1 << 2
+	PropertyAttributeDontDelete   = 1 << 3
+)
+
+const (
+	ClassAttributeNone = 0
+	ClassAttributeNoAutomaticPrototype = 1 << 1
+)
+
+func (ctx *Context) CopyPropertyNames(obj *Object) *PropertyNameArray {
+	ret := C.JSObjectCopyPropertyNames( C.JSContextRef(unsafe.Pointer(ctx)), C.JSObjectRef(unsafe.Pointer(obj)) )
+	return (*PropertyNameArray)(unsafe.Pointer( ret ))
+}
+
+func (ref *PropertyNameArray) Retain() {
+	C.JSPropertyNameArrayRetain( C.JSPropertyNameArrayRef(unsafe.Pointer(ref)) )
+}
+
+func (ref *PropertyNameArray) Release() {
+	C.JSPropertyNameArrayRelease( C.JSPropertyNameArrayRef(unsafe.Pointer(ref)) )
+}
+
+func (ref *PropertyNameArray) Count() uint16 {
+	ret := C.JSPropertyNameArrayGetCount( C.JSPropertyNameArrayRef(unsafe.Pointer(ref)) )
+	return uint16( ret )
+}
+
+func (ref *PropertyNameArray) NameAtIndex( index uint16 ) string {
+	jsstr := C.JSPropertyNameArrayGetNameAtIndex( C.JSPropertyNameArrayRef(unsafe.Pointer(ref)), C.size_t(index) )
+	defer C.JSStringRelease( jsstr )
+	return (*String)(unsafe.Pointer(jsstr)).String()
 }
 

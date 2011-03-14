@@ -30,7 +30,7 @@ func TestMakeFunctionWithCallback(t *testing.T) {
 	if !ctx.IsFunction( fn ) {
 		t.Errorf( "ctx.MakeFunctionWithCallback returned value that is not a function" )
 	}
-	if ctx.ToStringOrDie( fn.GetValue() ) != "nativecallback" {
+	if ctx.ToStringOrDie( fn.ToValue() ) != "nativecallback" {
 		t.Errorf( "ctx.MakeFunctionWithCallback returned value that does not convert to property string" )
 	}
 	ctx.CallAsFunction( fn, nil, []*js.Value{} )
@@ -91,7 +91,7 @@ func TestMakeFunctionWithCallbackPanic(t *testing.T) {
 	if !ctx.IsFunction( fn ) {
 		t.Errorf( "ctx.MakeFunctionWithCallback returned value that is not a function" )
 	}
-	if ctx.ToStringOrDie( fn.GetValue() ) != "nativecallback" {
+	if ctx.ToStringOrDie( fn.ToValue() ) != "nativecallback" {
 		t.Errorf( "ctx.MakeFunctionWithCallback returned value that does not convert to property string" )
 	}
 	val, err := ctx.CallAsFunction( fn, nil, []*js.Value{} )
@@ -126,7 +126,7 @@ func TestNativeFunction(t *testing.T) {
 	if !ctx.IsFunction( fn ) {
 		t.Errorf( "ctx.MakeFunctionWithNative returned value that is not a function" )
 	}
-	if ctx.ToStringOrDie( fn.GetValue() ) != "nativefunction" {
+	if ctx.ToStringOrDie( fn.ToValue() ) != "nativefunction" {
 		t.Errorf( "ctx.nativefunction returned value that does not convert to property string" )
 	}
 	ctx.CallAsFunction( fn, nil, []*js.Value{} )
@@ -169,7 +169,7 @@ func TestMakeNativeObject(t *testing.T) {
 	defer ctx.Release()
 
 	v := ctx.MakeNativeObject( obj )
-	ctx.ObjectSetProperty( ctx.GlobalObject(), "n", v.GetValue(), 0 )
+	ctx.ObjectSetProperty( ctx.GlobalObject(), "n", v.ToValue(), 0 )
 
 	// Following script access should be successful
 	ret, err := ctx.EvaluateScript( "n.F", nil, "./testing.go", 1 )

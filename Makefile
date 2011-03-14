@@ -7,7 +7,7 @@ CGOFILES=\
 	native.go \
 	object.go \
 	string.go \
-	javascriptcore.go
+	value.go 
 CGO_OFILES=callback.o
 CGO_CFLAGS=`pkg-config --cflags webkit-1.0`
 CGO_LDFLAGS=`pkg-config --libs webkit-1.0`

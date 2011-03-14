@@ -13,8 +13,8 @@ func TestMakeObject(t *testing.T) {
 	if val == nil {
 		t.Errorf( "ctx.MakeObject returned a nil poitner" )
 	}
-	if !ctx.IsObject( val.GetValue() ) {
-		t.Errorf( "ctx.MakeObject failed to return an object (%v)", ctx.ValueType( val.GetValue() ) )
+	if !ctx.IsObject( val.ToValue() ) {
+		t.Errorf( "ctx.MakeObject failed to return an object (%v)", ctx.ValueType( val.ToValue() ) )
 	}
 }	
 
@@ -29,8 +29,8 @@ func TestMakeDate(t *testing.T) {
 	if val == nil {
 		t.Errorf( "ctx.MakeDate returned a nil poitner" )
 	}
-	if !ctx.IsObject( val.GetValue() ) {
-		t.Errorf( "ctx.MakeDate failed to return an object (%v)", ctx.ValueType( val.GetValue() ) )
+	if !ctx.IsObject( val.ToValue() ) {
+		t.Errorf( "ctx.MakeDate failed to return an object (%v)", ctx.ValueType( val.ToValue() ) )
 	}
 }	
 
@@ -45,8 +45,8 @@ func TestMakeDateWithMilliseconds(t *testing.T) {
 	if val == nil {
 		t.Errorf( "ctx.MakeDateWithMilliseconds returned a nil poitner" )
 	}
-	if !ctx.IsObject( val.GetValue() ) {
-		t.Errorf( "ctx.MakeDateWithMilliseconds failed to return an object (%v)", ctx.ValueType( val.GetValue() ) )
+	if !ctx.IsObject( val.ToValue() ) {
+		t.Errorf( "ctx.MakeDateWithMilliseconds failed to return an object (%v)", ctx.ValueType( val.ToValue() ) )
 	}
 }	
 
@@ -61,8 +61,8 @@ func TestMakeDateWithString(t *testing.T) {
 	if val == nil {
 		t.Errorf( "ctx.MakeDateWithString returned a nil poitner" )
 	}
-	if !ctx.IsObject( val.GetValue() ) {
-		t.Errorf( "ctx.MakeDateWithString failed to return an object (%v)", ctx.ValueType( val.GetValue() ) )
+	if !ctx.IsObject( val.ToValue() ) {
+		t.Errorf( "ctx.MakeDateWithString failed to return an object (%v)", ctx.ValueType( val.ToValue() ) )
 	}
 }	
 
@@ -113,7 +113,7 @@ func TestMakeRegExp(t *testing.T) {
 		if err != nil {
 			t.Errorf( "ctx.MakeRegExp failed on string %v with error %v", item, err )
 		}
-		if ctx.ToStringOrDie( r.GetValue() ) != "/" + item + "/" {
+		if ctx.ToStringOrDie( r.ToValue() ) != "/" + item + "/" {
 			t.Errorf( "Error compling regexp %s", item )
 		}
 	}
@@ -131,7 +131,7 @@ func TestMakeRegExpFromValues(t *testing.T) {
 		if err != nil {
 			t.Errorf( "ctx.MakeRegExp failed on string %v with error %v", item, err )
 		}
-		if ctx.ToStringOrDie( r.GetValue() ) != "/" + item + "/" {
+		if ctx.ToStringOrDie( r.ToValue() ) != "/" + item + "/" {
 			t.Errorf( "Error compling regexp %s", item )
 		}
 	}

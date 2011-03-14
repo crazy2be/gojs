@@ -62,20 +62,20 @@ func recover_to_javascript( ctx *Context, r interface{} ) *Value {
 	if re, ok := r.(os.Error); ok {
 		// TODO:  Check for error return from MakeError
 		ret, _ := ctx.MakeError( re.String() )		
-		return ret.GetValue()
+		return (*Value)(unsafe.Pointer(ret))
 	}
 	if str, ok := r.(fmt.Stringer); ok {
 		ret, _ := ctx.MakeError( str.String() )		
-		return ret.GetValue()
+		return (*Value)(unsafe.Pointer(ret))
 	}
 	if str, ok := reflect.NewValue(r).(*reflect.StringValue); ok {
 		ret, _ := ctx.MakeError( str.Get() )		
-		return ret.GetValue()
+		return (*Value)(unsafe.Pointer(ret))
 	}
 
 	// TODO:  Check for error return from MakeError
 	ret, _ := ctx.MakeError( "Internal Go error" )		
-	return ret.GetValue()
+	return (*Value)(unsafe.Pointer(ret))
 }
 
 func javascript_to_reflect( ctx *Context, param []*Value ) []reflect.Value {

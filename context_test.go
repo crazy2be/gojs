@@ -26,7 +26,7 @@ func TestContextGlobalObject(t *testing.T) {
 	if obj == nil {
 		t.Errorf( "ctx.GlobalObject() returned nil" )
 	}
-	if ctx.ValueType(obj.GetValue()) != js.TypeObject {
+	if ctx.ValueType(obj.ToValue()) != js.TypeObject {
 		t.Errorf( "ctx.GlobalObject() did not return a javascript object" )
 	}
 }
