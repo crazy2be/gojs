@@ -18,12 +18,12 @@ func release_jsstringref_array( refs []C.JSStringRef ) {
 	}
 }
 
-func (ctx *Context) MakeObject() (*Object) {
+func (ctx *Context) NewObject() (*Object) {
 	ret := C.JSObjectMake( C.JSContextRef(unsafe.Pointer(ctx)), nil, nil )
 	return (*Object)(unsafe.Pointer(ret))
 }
 
-func (ctx *Context) MakeArray( items []*Value ) (*Object,*Value) {
+func (ctx *Context) NewArray( items []*Value ) (*Object,*Value) {
 	var exception C.JSValueRef
 
 	ret := C.JSObjectRef(nil)
@@ -42,7 +42,7 @@ func (ctx *Context) MakeArray( items []*Value ) (*Object,*Value) {
 	return (*Object)(unsafe.Pointer(ret)), nil
 }
 
-func (ctx *Context) MakeDate() (*Object,*Value) {
+func (ctx *Context) NewDate() (*Object,*Value) {
 	var exception C.JSValueRef
 
 	ret := C.JSObjectMakeDate( C.JSContextRef(unsafe.Pointer(ctx)), 
@@ -54,7 +54,7 @@ func (ctx *Context) MakeDate() (*Object,*Value) {
 	return (*Object)(unsafe.Pointer(ret)), nil
 }
 
-func (ctx *Context) MakeDateWithMilliseconds( milliseconds float64 ) (*Object,*Value) {
+func (ctx *Context) NewDateWithMilliseconds( milliseconds float64 ) (*Object,*Value) {
 	var exception C.JSValueRef
 
 	param := ctx.NewNumberValue( milliseconds )
@@ -68,7 +68,7 @@ func (ctx *Context) MakeDateWithMilliseconds( milliseconds float64 ) (*Object,*V
 	return (*Object)(unsafe.Pointer(ret)), nil
 }
 
-func (ctx *Context) MakeDateWithString( date string ) (*Object,*Value) {
+func (ctx *Context) NewDateWithString( date string ) (*Object,*Value) {
 	var exception C.JSValueRef
 
 	param := ctx.NewStringValue( date )
@@ -82,7 +82,7 @@ func (ctx *Context) MakeDateWithString( date string ) (*Object,*Value) {
 	return (*Object)(unsafe.Pointer(ret)), nil
 }
 
-func (ctx *Context) MakeError( message string ) (*Object,*Value) {
+func (ctx *Context) NewError( message string ) (*Object,*Value) {
 	var exception C.JSValueRef
 
 	param := ctx.NewStringValue( message )
@@ -96,7 +96,7 @@ func (ctx *Context) MakeError( message string ) (*Object,*Value) {
 	return (*Object)(unsafe.Pointer(ret)), nil
 }
 
-func (ctx *Context) MakeRegExp( regex string ) (*Object,*Value) {
+func (ctx *Context) NewRegExp( regex string ) (*Object,*Value) {
 	var exception C.JSValueRef
 
 	param := ctx.NewStringValue( regex )
@@ -110,7 +110,7 @@ func (ctx *Context) MakeRegExp( regex string ) (*Object,*Value) {
 	return (*Object)(unsafe.Pointer(ret)), nil
 }
 
-func (ctx *Context) MakeRegExpFromValues( parameters []*Value ) (*Object,*Value) {
+func (ctx *Context) NewRegExpFromValues( parameters []*Value ) (*Object,*Value) {
 	var exception C.JSValueRef
 
 	ret := C.JSObjectMakeRegExp( C.JSContextRef(unsafe.Pointer(ctx)), 
@@ -122,7 +122,7 @@ func (ctx *Context) MakeRegExpFromValues( parameters []*Value ) (*Object,*Value)
 	return (*Object)(unsafe.Pointer(ret)), nil
 }
 
-func (ctx *Context) MakeFunction(name string, parameters []string, body string, source_url string, starting_line_number int ) (*Object,*Value) {
+func (ctx *Context) NewFunction(name string, parameters []string, body string, source_url string, starting_line_number int ) (*Object,*Value) {
 	Cname := NewString( name )
 	defer Cname.Release()
 

@@ -60,21 +60,21 @@ func value_to_javascript( ctx *Context, value reflect.Value ) *Value {
 
 func recover_to_javascript( ctx *Context, r interface{} ) *Value {
 	if re, ok := r.(os.Error); ok {
-		// TODO:  Check for error return from MakeError
-		ret, _ := ctx.MakeError( re.String() )		
+		// TODO:  Check for error return from NewError
+		ret, _ := ctx.NewError( re.String() )		
 		return (*Value)(unsafe.Pointer(ret))
 	}
 	if str, ok := r.(fmt.Stringer); ok {
-		ret, _ := ctx.MakeError( str.String() )		
+		ret, _ := ctx.NewError( str.String() )		
 		return (*Value)(unsafe.Pointer(ret))
 	}
 	if str, ok := reflect.NewValue(r).(*reflect.StringValue); ok {
-		ret, _ := ctx.MakeError( str.Get() )		
+		ret, _ := ctx.NewError( str.Get() )		
 		return (*Value)(unsafe.Pointer(ret))
 	}
 
-	// TODO:  Check for error return from MakeError
-	ret, _ := ctx.MakeError( "Internal Go error" )		
+	// TODO:  Check for error return from NewError
+	ret, _ := ctx.NewError( "Internal Go error" )		
 	return (*Value)(unsafe.Pointer(ret))
 }
 
@@ -107,7 +107,7 @@ func javascript_to_reflect( ctx *Context, param []*Value ) []reflect.Value {
 
 type GoFunctionCallback func(ctx *Context, obj *Object, thisObject *Object, arguments []*Value) (ret *Value)
 
-func (ctx *Context) MakeFunctionWithCallback( callback GoFunctionCallback ) *Object {
+func (ctx *Context) NewFunctionWithCallback( callback GoFunctionCallback ) *Object {
 	_, addr := unsafe.Reflect( callback )
 
 	ret := C.JSObjectMake( C.JSContextRef(unsafe.Pointer(ctx)), nativecallback, addr )
@@ -131,7 +131,7 @@ func nativecallback_CallAsFunction_go( data unsafe.Pointer, ctx unsafe.Pointer, 
 // Native Function
 //---------------------------------------------------------
 
-func (ctx *Context) MakeFunctionWithNative( fn interface{} ) *Object {
+func (ctx *Context) NewFunctionWithNative( fn interface{} ) *Object {
 	// Sanity checks on the function
 	if typ := reflect.Typeof( fn ).(*reflect.FuncType); typ.NumOut() > 1 {
 		panic( "Bad native function:  too many output parameters" )
@@ -193,7 +193,7 @@ func nativefunction_CallAsFunction_go( data unsafe.Pointer, ctx unsafe.Pointer, 
 // Native Object
 //---------------------------------------------------------
 
-func (ctx *Context) MakeNativeObject( obj interface{} ) *Object {
+func (ctx *Context) NewNativeObject( obj interface{} ) *Object {
 	// The obj must be a pointer to a struct
 	// TODO:  add error checking code
 

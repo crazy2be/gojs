@@ -12,7 +12,7 @@ type reflect_object struct {
 	S	string
 }
 
-func TestMakeFunctionWithCallback(t *testing.T) {
+func TestNewFunctionWithCallback(t *testing.T) {
 	var flag bool
 	callback := func (ctx *js.Context, obj *js.Object, thisObject *js.Object, _ []*js.Value ) (*js.Value){
 		flag = true
@@ -22,16 +22,16 @@ func TestMakeFunctionWithCallback(t *testing.T) {
 	ctx := js.NewContext()
 	defer ctx.Release()
 
-	fn := ctx.MakeFunctionWithCallback( callback )
+	fn := ctx.NewFunctionWithCallback( callback )
 	if fn == nil {
-		t.Errorf( "ctx.MakeFunctionWithCallback failed" )
+		t.Errorf( "ctx.NewFunctionWithCallback failed" )
 		return
 	}
 	if !ctx.IsFunction( fn ) {
-		t.Errorf( "ctx.MakeFunctionWithCallback returned value that is not a function" )
+		t.Errorf( "ctx.NewFunctionWithCallback returned value that is not a function" )
 	}
 	if ctx.ToStringOrDie( fn.ToValue() ) != "nativecallback" {
-		t.Errorf( "ctx.MakeFunctionWithCallback returned value that does not convert to property string" )
+		t.Errorf( "ctx.NewFunctionWithCallback returned value that does not convert to property string" )
 	}
 	ctx.CallAsFunction( fn, nil, []*js.Value{} )
 	if !flag {
@@ -39,7 +39,7 @@ func TestMakeFunctionWithCallback(t *testing.T) {
 	}
 }
 
-func TestMakeFunctionWithCallback2(t *testing.T) {
+func TestNewFunctionWithCallback2(t *testing.T) {
 	callback := func (ctx *js.Context, obj *js.Object, thisObject *js.Object, args []*js.Value ) (*js.Value){
 		if len(args)!=2 {
 			return nil
@@ -53,7 +53,7 @@ func TestMakeFunctionWithCallback2(t *testing.T) {
 	ctx := js.NewContext()
 	defer ctx.Release()
 
-	fn := ctx.MakeFunctionWithCallback( callback )
+	fn := ctx.NewFunctionWithCallback( callback )
 	a := ctx.NewNumberValue( 1.5 )
 	b := ctx.NewNumberValue( 3.0 )
 	val, err := ctx.CallAsFunction( fn, nil, []*js.Value{ a, b } )
@@ -65,7 +65,7 @@ func TestMakeFunctionWithCallback2(t *testing.T) {
 	}
 }
 
-func TestMakeFunctionWithCallbackPanic(t *testing.T) {
+func TestNewFunctionWithCallbackPanic(t *testing.T) {
 	var callbacks = []js.GoFunctionCallback{}
 	var error_msgs = []string{ "error from go!", os.ENOMEM.String() }
 
@@ -83,26 +83,26 @@ func TestMakeFunctionWithCallbackPanic(t *testing.T) {
 
 	for index, callback := range callbacks {
 
-	fn := ctx.MakeFunctionWithCallback( callback )
+	fn := ctx.NewFunctionWithCallback( callback )
 	if fn == nil {
-		t.Errorf( "ctx.MakeFunctionWithCallback failed" )
+		t.Errorf( "ctx.NewFunctionWithCallback failed" )
 		return
 	}
 	if !ctx.IsFunction( fn ) {
-		t.Errorf( "ctx.MakeFunctionWithCallback returned value that is not a function" )
+		t.Errorf( "ctx.NewFunctionWithCallback returned value that is not a function" )
 	}
 	if ctx.ToStringOrDie( fn.ToValue() ) != "nativecallback" {
-		t.Errorf( "ctx.MakeFunctionWithCallback returned value that does not convert to property string" )
+		t.Errorf( "ctx.NewFunctionWithCallback returned value that does not convert to property string" )
 	}
 	val, err := ctx.CallAsFunction( fn, nil, []*js.Value{} )
 	if val != nil {
-		t.Errorf( "ctx.MakeFunctionWithCallback that panicked returned a value" )
+		t.Errorf( "ctx.NewFunctionWithCallback that panicked returned a value" )
 	}
 	if err == nil || !ctx.IsObject( err ) {
-		t.Errorf( "ctx.MakeFunctionWithCallback that panicked did not set exception" )
+		t.Errorf( "ctx.NewFunctionWithCallback that panicked did not set exception" )
 	}
 	if ctx.ToStringOrDie(err) != "Error: " + error_msgs[index] {
-		t.Errorf( "ctx.MakeFunctionWithCallback that panicked did not set exception message (%v,%v)", 
+		t.Errorf( "ctx.NewFunctionWithCallback that panicked did not set exception message (%v,%v)", 
 			ctx.ToStringOrDie(err), error_msgs[index] )
 	}
 
@@ -118,13 +118,13 @@ func TestNativeFunction(t *testing.T) {
 	ctx := js.NewContext()
 	defer ctx.Release()
 
-	fn := ctx.MakeFunctionWithNative( callback )
+	fn := ctx.NewFunctionWithNative( callback )
 	if fn == nil {
-		t.Errorf( "ctx.MakeFunctionWithNative failed" )
+		t.Errorf( "ctx.NewFunctionWithNative failed" )
 		return
 	}
 	if !ctx.IsFunction( fn ) {
-		t.Errorf( "ctx.MakeFunctionWithNative returned value that is not a function" )
+		t.Errorf( "ctx.NewFunctionWithNative returned value that is not a function" )
 	}
 	if ctx.ToStringOrDie( fn.ToValue() ) != "nativefunction" {
 		t.Errorf( "ctx.nativefunction returned value that does not convert to property string" )
@@ -143,13 +143,13 @@ func TestNativeFunction2(t *testing.T) {
 	ctx := js.NewContext()
 	defer ctx.Release()
 
-	fn := ctx.MakeFunctionWithNative( callback )
+	fn := ctx.NewFunctionWithNative( callback )
 	if fn == nil {
-		t.Errorf( "ctx.MakeFunctionWithNative failed" )
+		t.Errorf( "ctx.NewFunctionWithNative failed" )
 		return
 	}
 	if !ctx.IsFunction( fn ) {
-		t.Errorf( "ctx.MakeFunctionWithNative returned value that is not a function" )
+		t.Errorf( "ctx.NewFunctionWithNative returned value that is not a function" )
 	}
 	a := ctx.NewNumberValue( 1.5 )
 	b := ctx.NewNumberValue( 3.0 )
@@ -162,13 +162,13 @@ func TestNativeFunction2(t *testing.T) {
 	}
 }	
 
-func TestMakeNativeObject(t *testing.T) {
+func TestNewNativeObject(t *testing.T) {
 	obj := &reflect_object{ 2, 3.0, "four" }
 
 	ctx := js.NewContext()
 	defer ctx.Release()
 
-	v := ctx.MakeNativeObject( obj )
+	v := ctx.NewNativeObject( obj )
 	ctx.SetProperty( ctx.GlobalObject(), "n", v.ToValue(), 0 )
 
 	// Following script access should be successful
