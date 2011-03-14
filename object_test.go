@@ -16,6 +16,52 @@ func TestMakeObject(t *testing.T) {
 	if !ctx.IsObject( val.ToValue() ) {
 		t.Errorf( "ctx.MakeObject failed to return an object (%v)", ctx.ValueType( val.ToValue() ) )
 	}
+}
+
+func TestMakeArray(t *testing.T) {
+	ctx := js.NewContext()
+	defer ctx.Release()
+
+	val, err := ctx.MakeArray(nil)
+	if err != nil {
+		t.Errorf( "ctx.MakeArray returned an exception (%v)", ctx.ToStringOrDie(err) )
+	}
+	if val == nil {
+		t.Errorf( "ctx.MakeArray returned a nil poitner" )
+	}
+	if !ctx.IsObject( val.ToValue() ) {
+		t.Errorf( "ctx.MakeArray failed to return an object (%v)", ctx.ValueType( val.ToValue() ) )
+	}
+}	
+
+func TestMakeArray2(t *testing.T) {
+	ctx := js.NewContext()
+	defer ctx.Release()
+
+	a := ctx.NewNumberValue( 1.5 )
+	b := ctx.NewNumberValue( 3.0 )
+
+	val, err := ctx.MakeArray( []*js.Value{ a, b } )
+	if err != nil {
+		t.Errorf( "ctx.MakeArray returned an exception (%v)", ctx.ToStringOrDie(err) )
+	}
+	if val == nil {
+		t.Errorf( "ctx.MakeArray returned a nil poitner" )
+	}
+	if !ctx.IsObject( val.ToValue() ) {
+		t.Errorf( "ctx.MakeArray failed to return an object (%v)", ctx.ValueType( val.ToValue() ) )
+	}
+	prop, err := ctx.ObjectGetProperty( val, "length" )
+	if err != nil || prop == nil {
+		t.Errorf( "ctx.MakeArray returned object without 'length' property" )
+	} else {
+		if !ctx.IsNumber( prop ) {
+			t.Errorf( "ctx.MakeArray return object with 'length' property not a number" )
+		}
+		if ctx.ToNumberOrDie( prop ) != 2 {
+			t.Errorf( "ctx.MakeArray return object with 'length' not equal to 2", ctx.ToNumberOrDie( prop ) )
+		}
+	}
 }	
 
 func TestMakeDate(t *testing.T) {

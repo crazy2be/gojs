@@ -23,6 +23,25 @@ func (ctx *Context) MakeObject() (*Object) {
 	return (*Object)(unsafe.Pointer(ret))
 }
 
+func (ctx *Context) MakeArray( items []*Value ) (*Object,*Value) {
+	var exception C.JSValueRef
+
+	ret := C.JSObjectRef(nil)
+	if items != nil {
+		ret = C.JSObjectMakeArray( C.JSContextRef(unsafe.Pointer(ctx)), 
+			C.size_t(len(items)), (*C.JSValueRef)( unsafe.Pointer( &items[0] ) ),
+			&exception )
+	} else {
+		ret = C.JSObjectMakeArray( C.JSContextRef(unsafe.Pointer(ctx)), 
+			0, nil,
+			&exception )
+	}
+	if exception != nil {
+		return nil, (*Value)(unsafe.Pointer(exception))
+	}
+	return (*Object)(unsafe.Pointer(ret)), nil
+}
+
 func (ctx *Context) MakeDate() (*Object,*Value) {
 	var exception C.JSValueRef
 
