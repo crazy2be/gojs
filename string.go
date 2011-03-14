@@ -14,6 +14,13 @@ import "C"
 type String struct {
 }
 
+func NewString( value string ) *String {
+	cvalue := C.CString( value )
+	defer C.free( unsafe.Pointer(cvalue) )
+	ref := C.JSStringCreateWithUTF8CString( cvalue )
+	return (*String)( unsafe.Pointer( ref ) )
+}
+
 func (ref *String) Retain() {
 	C.JSStringRetain( (C.JSStringRef)(unsafe.Pointer(ref)) )
 }
@@ -22,23 +29,19 @@ func (ref *String) Release() {
 	C.JSStringRelease( (C.JSStringRef)(unsafe.Pointer(ref)) )
 }
 
-func string_js_2_go( ref C.JSStringRef ) string {
+func (ref *String) String() string {
 	// Conversion 1, null-terminate UTF-8 string
-	len := C.JSStringGetMaximumUTF8CStringSize( ref )
+	len := C.JSStringGetMaximumUTF8CStringSize( (C.JSStringRef)(unsafe.Pointer(ref)) )
 	buffer := C.malloc( len )
 	if buffer==nil {
 		panic( os.ENOMEM )
 	}
 	defer C.free( buffer )
-	C.JSStringGetUTF8CString( ref, (*C.char)(buffer), len )
+	C.JSStringGetUTF8CString( (C.JSStringRef)(unsafe.Pointer(ref)), (*C.char)(buffer), len )
 
 	// Conversion 2, Go string
 	ret := C.GoString( (*C.char)(buffer) )
 	return ret
-}
-
-func (ref *String) String() string {
-	return string_js_2_go( (C.JSStringRef)(unsafe.Pointer(ref)) )
 }
 
 func (ref *String) Length() uint32 {

@@ -106,13 +106,6 @@ func (ctx *Context) NewStringValue( value string ) *Value {
 	return (*Value)(unsafe.Pointer(ref))
 }
 
-func NewString( value string ) *String {
-	cvalue := C.CString( value )
-	defer C.free( unsafe.Pointer(cvalue) )
-	ref := C.JSStringCreateWithUTF8CString( cvalue )
-	return (*String)( unsafe.Pointer( ref ) )
-}
-
 func (ctx *Context) ProtectValue( ref *Value ) {
 	C.JSValueProtect( C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(ref)) )
 }
@@ -226,6 +219,6 @@ func (ref *PropertyNameArray) Count() uint16 {
 func (ref *PropertyNameArray) NameAtIndex( index uint16 ) string {
 	jsstr := C.JSPropertyNameArrayGetNameAtIndex( C.JSPropertyNameArrayRef(unsafe.Pointer(ref)), C.size_t(index) )
 	defer C.JSStringRelease( jsstr )
-	return string_js_2_go( jsstr )
+	return (*String)(unsafe.Pointer(jsstr)).String()
 }
 
