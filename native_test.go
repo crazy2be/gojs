@@ -11,6 +11,10 @@ type reflect_object struct {
 	S	string
 }
 
+func (o *reflect_object) String() string {
+	return o.S
+}
+
 func TestNewFunctionWithCallback(t *testing.T) {
 	var flag bool
 	callback := func (ctx *Context, obj *Object, thisObject *Object, _ []*Value ) (*Value){
@@ -206,4 +210,48 @@ func TestNewNativeObject(t *testing.T) {
 		t.Errorf( "ctx.EvaluateScript incorrect value when accessing native object's field." )
 	}
 }
+
+func TestNewNativeObjectSet(t *testing.T) {
+	obj := &reflect_object{ 2, 3.0, "four" }
+
+	ctx := NewContext()
+	defer ctx.Release()
+
+	v := ctx.NewNativeObject( obj )
+	ctx.SetProperty( ctx.GlobalObject(), "n", v.ToValue(), 0 )
+
+	// Set the integer property
+	i := ctx.NewNumberValue( 3 )
+	ctx.SetProperty( v, "I", i, 0 )
+	if obj.I != 3 {
+		t.Errorf( "ctx.SetProperty did not set integer field correctly" )
+	}
+
+	// Set the float property
+	n := ctx.NewNumberValue( 4.0 )
+	ctx.SetProperty( v, "F", n, 0 )
+	if obj.F != 4.0 {
+		t.Errorf( "ctx.SetProperty did not set float field correctly" )
+	}
+
+	s := ctx.NewStringValue( "five" )
+	ctx.SetProperty( v, "S", s, 0 )
+	if obj.S != "five" {
+		t.Errorf( "ctx.SetProperty did not set string field correctly" )
+	}
+}
+
+func TestNewNativeObjectConvert(t *testing.T) {
+	obj := &reflect_object{ 2, 3.0, "four" }
+
+	ctx := NewContext()
+	defer ctx.Release()
+
+	v := ctx.NewNativeObject( obj )
+
+	if ctx.ToStringOrDie( v.ToValue() ) != "four" {
+		t.Errorf( "ctx.ToStringOrDie for native object did not return correct value." )
+	}
+}
+
 

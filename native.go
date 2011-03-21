@@ -5,7 +5,6 @@ package javascriptcore
 // #include <JavaScriptCore/JSObjectRef.h>
 // #include "callback.h"
 import "C"
-import "fmt"
 import "os"
 import "reflect"
 import "runtime"
@@ -17,6 +16,10 @@ var (
 	nativefunction C.JSClassRef
 	nativeobject C.JSClassRef
 )
+
+type Stringer interface {
+	String() string
+}
 
 func init() {
 	// Create the class definition for JavaScriptCore
@@ -64,7 +67,7 @@ func recover_to_javascript( ctx *Context, r interface{} ) *Value {
 		ret, _ := ctx.NewError( re.String() )		
 		return (*Value)(unsafe.Pointer(ret))
 	}
-	if str, ok := r.(fmt.Stringer); ok {
+	if str, ok := r.(Stringer); ok {
 		ret, _ := ctx.NewError( str.String() )		
 		return (*Value)(unsafe.Pointer(ret))
 	}
@@ -99,6 +102,37 @@ func javascript_to_reflect( ctx *Context, param []*Value ) []reflect.Value {
 	}
 
 	return ret
+}
+
+func javascript_to_value( field reflect.Value, ctx *Context, value *Value, exception *unsafe.Pointer )  {
+	switch field.(type) {
+		case *reflect.StringValue:
+			str, err := ctx.ToString( value )
+			if err == nil {
+				field.(*reflect.StringValue).Set( str )
+			} else {
+				*exception = unsafe.Pointer( err )
+			}
+
+		case *reflect.FloatValue:
+			flt, err := ctx.ToNumber( value )
+			if err == nil {
+				field.(*reflect.FloatValue).Set( flt )
+			} else {
+				*exception = unsafe.Pointer( err )
+			}
+
+		case *reflect.IntValue:
+			flt, err := ctx.ToNumber( value )
+			if err == nil {
+				field.(*reflect.IntValue).Set( int64(flt) )
+			} else {
+				*exception = unsafe.Pointer( err )
+			}
+
+		default:
+			panic( "Parameter can not be converted to Go native type." )
+	}
 }
 
 //=========================================================
@@ -206,7 +240,7 @@ func (ctx *Context) NewNativeObject( obj interface{} ) *Object {
 }
 
 //export nativeobject_GetProperty_go
-func nativeobject_GetProperty_go( data unsafe.Pointer, ctx unsafe.Pointer, _ unsafe.Pointer, propertyName unsafe.Pointer, exception *unsafe.Pointer ) unsafe.Pointer {
+func nativeobject_GetProperty_go( data, ctx, _, propertyName unsafe.Pointer, exception *unsafe.Pointer ) unsafe.Pointer {
 	// Get name of property as a go string
 	name := (*String)(propertyName).String()
 
@@ -229,5 +263,64 @@ func nativeobject_GetProperty_go( data unsafe.Pointer, ctx unsafe.Pointer, _ uns
 	}
 
 	return unsafe.Pointer( value_to_javascript( (*Context)(ctx), field ) )
+}
+
+func internal_go_error( ctx *Context ) *Value {
+	param := ctx.NewStringValue( "Internal Go error." )
+	
+	exception := (*Value)(nil)
+	ret := C.JSObjectMakeError( C.JSContextRef(unsafe.Pointer(ctx)), 
+		C.size_t(1), (*C.JSValueRef)( unsafe.Pointer( &param ) ),
+		(*C.JSValueRef)(unsafe.Pointer(&exception)) )
+	if ret != nil {
+		return (*Value)(unsafe.Pointer(ret))
+	}
+	if exception != nil{
+		return exception
+	}
+	panic( "Internal Go error." )
+}
+
+//export nativeobject_SetProperty_go
+func nativeobject_SetProperty_go( data, ctx, _, propertyName, value unsafe.Pointer, exception *unsafe.Pointer ) C.char {
+	// Get name of property as a go string
+	name := (*String)(propertyName).String()
+
+	// Reconstruct the object interface
+	obji := unsafe.Unreflect( (*C.nativeobject_data)(data).typ, (*C.nativeobject_data)(data).addr )
+
+	// Drill down through reflect to find the property
+	objv := reflect.NewValue( obji )
+	if ptrvalue, ok := objv.(*reflect.PtrValue); ok {
+		objv = ptrvalue.Elem()
+	}
+	strvalue, ok := objv.(*reflect.StructValue)
+	if !ok {
+		*exception = unsafe.Pointer( internal_go_error( (*Context)(ctx) ) )
+		return 1
+	}
+
+	field := strvalue.FieldByName( name )
+	if field == nil {
+		return 0
+	}
+
+	javascript_to_value( field, (*Context)(ctx), (*Value)(value), exception )
+	return 1
+}
+
+//export nativeobject_ConvertToString_go
+func nativeobject_ConvertToString_go( data, ctx, obj unsafe.Pointer ) unsafe.Pointer {
+	// Reconstruct the object interface
+	obji := unsafe.Unreflect( (*C.nativeobject_data)(data).typ, (*C.nativeobject_data)(data).addr )
+
+	// Can we get a string?
+	if stringer, ok := obji.(Stringer); ok {
+		str := stringer.String()
+		ret := NewString( str )
+		return unsafe.Pointer( ret )
+	}
+
+	return nil
 }
 

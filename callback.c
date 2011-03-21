@@ -19,7 +19,7 @@ static JSValueRef nativecallback_CallAsFunction(JSContextRef ctx, JSObjectRef fu
 	return ret;
 }
 
-static JSValueRef nativecallback_ObjectConvertToType(JSContextRef ctx, JSObjectRef object, JSType type, JSValueRef* exception)
+static JSValueRef nativecallback_ConvertToType(JSContextRef ctx, JSObjectRef object, JSType type, JSValueRef* exception)
 {
 	if ( type == kJSTypeString ) {
 		JSStringRef str = JSStringCreateWithUTF8CString( "nativecallback" );
@@ -50,7 +50,7 @@ JSClassRef JSClassDefinition_NativeCallback()
 		nativecallback_CallAsFunction, // callAsFunction;
 		NULL, // callAsConstructor;
 		NULL, // hasInstance;
-		nativecallback_ObjectConvertToType // convertToType;
+		nativecallback_ConvertToType // convertToType;
 	};
 
 	return JSClassCreate( &def );
@@ -77,7 +77,7 @@ static JSValueRef nativefunction_CallAsFunction(JSContextRef ctx, JSObjectRef fu
 	return ret;
 }
 
-static JSValueRef nativefunction_ObjectConvertToType(JSContextRef ctx, JSObjectRef object, JSType type, JSValueRef* exception)
+static JSValueRef nativefunction_ConvertToType(JSContextRef ctx, JSObjectRef object, JSType type, JSValueRef* exception)
 {
 	if ( type == kJSTypeString ) {
 		JSStringRef str = JSStringCreateWithUTF8CString( "nativefunction" );
@@ -108,7 +108,7 @@ JSClassRef JSClassDefinition_NativeFunction()
 		nativefunction_CallAsFunction, // callAsFunction;
 		NULL, // callAsConstructor;
 		NULL, // hasInstance;
-		nativefunction_ObjectConvertToType // convertToType;
+		nativefunction_ConvertToType // convertToType;
 	};
 
 	return JSClassCreate( &def );
@@ -145,6 +145,31 @@ static JSValueRef nativeobject_GetProperty(JSContextRef ctx, JSObjectRef object,
 	return ret;
 }
 
+static bool nativeobject_SetProperty(JSContextRef ctx, JSObjectRef object, JSStringRef propertyName, JSValueRef value, JSValueRef* exception)
+{
+	assert( exception );
+
+	// Routine must set private to callback point in Go
+	void* data = JSObjectGetPrivate( object );
+	return nativeobject_SetProperty_go( data, (void*)ctx, (void*)object, (void*)propertyName, (void*)value, (void**)exception );
+}
+
+static JSValueRef nativeobject_ConvertToType(JSContextRef ctx, JSObjectRef object, JSType type, JSValueRef* exception)
+{
+	if ( type == kJSTypeString ) {
+		void* data = JSObjectGetPrivate( object );
+		JSStringRef str = nativeobject_ConvertToString_go( data, (void*)ctx, (void*)object );
+		if ( !str ) {
+			str = JSStringCreateWithUTF8CString( "nativeobject" );
+		}
+		JSValueRef ret = JSValueMakeString( ctx, str );
+		JSStringRelease( str );
+		return ret;
+	}
+
+	return 0;
+}
+
 JSClassRef JSClassDefinition_NativeObject()
 {
 	static JSClassDefinition def = {
@@ -158,13 +183,13 @@ JSClassRef JSClassDefinition_NativeObject()
 		nativeobject_Finalize, // finalize;
 		NULL, // hasProperty;
 		nativeobject_GetProperty, // getProperty;
-		NULL, // setProperty;
+		nativeobject_SetProperty, // setProperty;
 		NULL, // deleteProperty;
 		NULL, // getPropertyNames;
 		NULL, // callAsFunction;
 		NULL, // callAsConstructor;
 		NULL, // hasInstance;
-		NULL // convertToType;
+		nativeobject_ConvertToType // convertToType;
 	};
 
 	return JSClassCreate( &def );
