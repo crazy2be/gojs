@@ -15,6 +15,14 @@ func (o *reflect_object) String() string {
 	return o.S
 }
 
+func (o *reflect_object) Add() float64 {
+	return float64(o.I) + o.F
+}
+
+func (o *reflect_object) AddWith( op float64 ) float64 {
+	return float64(o.I) + o.F + op
+}
+
 func TestNewFunctionWithCallback(t *testing.T) {
 	var flag bool
 	callback := func (ctx *Context, obj *Object, thisObject *Object, _ []*Value ) (*Value){
@@ -251,6 +259,44 @@ func TestNewNativeObjectConvert(t *testing.T) {
 
 	if ctx.ToStringOrDie( v.ToValue() ) != "four" {
 		t.Errorf( "ctx.ToStringOrDie for native object did not return correct value." )
+	}
+}
+
+func TestNewNativeObjectMethod(t *testing.T) {
+	obj := &reflect_object{ 2, 3.0, "four" }
+
+	ctx := NewContext()
+	defer ctx.Release()
+
+	v := ctx.NewNativeObject( obj )
+	ctx.SetProperty( ctx.GlobalObject(), "n", v.ToValue(), 0 )
+
+	// Following script access should be successful
+	ret, err := ctx.EvaluateScript( "n.Add()", nil, "./testing.go", 1 )
+	if err != nil || ret == nil {
+		t.Errorf( "ctx.EvaluateScript returned an error (or did not return a result)" )
+		return
+	}
+	if !ctx.IsNumber( ret ) {
+		t.Errorf( "ctx.EvaluateScript did not return 'number' result when calling method 'Add'." )
+	}
+	num := ctx.ToNumberOrDie( ret )
+	if num != 5.0 {
+		t.Errorf( "ctx.EvaluateScript incorrect value when accessing native object's field." )
+	}
+
+	// Following script access should be successful
+	ret, err = ctx.EvaluateScript( "n.AddWith(0.5)", nil, "./testing.go", 1 )
+	if err != nil || ret == nil {
+		t.Errorf( "ctx.EvaluateScript returned an error (or did not return a result)" )
+		return
+	}
+	if !ctx.IsNumber( ret ) {
+		t.Errorf( "ctx.EvaluateScript did not return 'number' result when calling method 'AddWith'." )
+	}
+	num = ctx.ToNumberOrDie( ret )
+	if num != 5.5 {
+		t.Errorf( "ctx.EvaluateScript incorrect value when accessing native object's field." )
 	}
 }
 

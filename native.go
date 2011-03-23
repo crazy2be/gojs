@@ -15,6 +15,7 @@ var (
 	nativecallback_typ interface{}
 	nativefunction C.JSClassRef
 	nativeobject C.JSClassRef
+	nativemethod C.JSClassRef
 )
 
 type Stringer interface {
@@ -41,6 +42,12 @@ func init() {
 	// Create the class definition for JavaScriptCore
 	nativefunction = C.JSClassDefinition_NativeFunction()
 	if nativefunction == nil {
+		panic( os.ENOMEM )
+	}
+
+	// Create the class definition for JavaScriptCore
+	nativemethod = C.JSClassDefinition_NativeMethod()
+	if nativemethod == nil {
 		panic( os.ENOMEM )
 	}
 }
@@ -181,8 +188,18 @@ func (ctx *Context) NewFunctionWithNative( fn interface{} ) *Object {
 
 
 
-func docall( ctx *Context, val *reflect.FuncValue, in []reflect.Value ) (*Value) {
+func docall( ctx *Context, val *reflect.FuncValue, argumentCount uint, arguments unsafe.Pointer ) (*Value) {
+	// Step one, convert the JavaScriptCore array of arguments to 
+	// an array of reflect.Values.  
+	var in []reflect.Value
+	if argumentCount!=0 {
+		in = javascript_to_reflect( (*Context)(ctx), (*[1<<14]*Value)(arguments)[0:argumentCount] )
+	}
+
+	// Step two, perform the call
 	out := val.Call( in )
+
+	// Step three, convert the function return value back to JavaScriptCore
 	if len(out) == 0 {
 		return nil
 	}
@@ -212,14 +229,7 @@ func nativefunction_CallAsFunction_go( data unsafe.Pointer, ctx unsafe.Pointer, 
 		panic( "Incorrect number of function arguments" )
 	}
 
-	// Perform the call
-	if typ.NumIn() == 0 {
-		ret := docall( (*Context)(ctx), val, nil )
-		return unsafe.Pointer(ret)
-	}
-
-	param := javascript_to_reflect( (*Context)(ctx), (*[1<<14]*Value)(arguments)[0:argumentCount] )
-	ret := docall( (*Context)(ctx), val, param )
+	ret := docall( (*Context)(ctx), val, argumentCount, arguments )
 	return unsafe.Pointer( ret )
 }
 
@@ -257,12 +267,24 @@ func nativeobject_GetProperty_go( data, ctx, _, propertyName unsafe.Pointer, exc
 		return nil
 	}
 
+	// Can we locate a field with the proper name?
 	field := strvalue.FieldByName( name )
-	if field == nil {
-		return nil
+	if field != nil {
+		return unsafe.Pointer( value_to_javascript( (*Context)(ctx), field ) )
 	}
 
-	return unsafe.Pointer( value_to_javascript( (*Context)(ctx), field ) )
+	// Can we locate a method with the proper name?
+	typ := reflect.NewValue( obji ).Type()
+	for lp:=0; lp<typ.NumMethod(); lp++ {
+		if typ.Method(lp).Name == name {
+			data := C.new_nativemethod_data( (*C.nativeobject_data)(data).typ, (*C.nativeobject_data)(data).addr, C.unsigned(lp) )
+			ret := C.JSObjectMake( C.JSContextRef(unsafe.Pointer(ctx)), nativemethod, data )
+			return unsafe.Pointer(ret)
+		}
+	}
+
+	// No matches found
+	return nil
 }
 
 func internal_go_error( ctx *Context ) *Value {
@@ -322,5 +344,33 @@ func nativeobject_ConvertToString_go( data, ctx, obj unsafe.Pointer ) unsafe.Poi
 	}
 
 	return nil
+}
+
+//=========================================================
+// Native Method
+//---------------------------------------------------------
+
+//export nativemethod_CallAsFunction_go
+func nativemethod_CallAsFunction_go( data unsafe.Pointer, ctx unsafe.Pointer, obj unsafe.Pointer, thisObject unsafe.Pointer, argumentCount uint, arguments unsafe.Pointer, exception *unsafe.Pointer ) unsafe.Pointer {
+	defer func() {
+		if r := recover(); r != nil {
+			*exception = unsafe.Pointer( recover_to_javascript( (*Context)(ctx), r ) )
+		}
+	}()
+
+	// Reconstruct the object interface
+	obji := unsafe.Unreflect( (*C.nativemethod_data)(data).typ, (*C.nativemethod_data)(data).addr )
+
+	// Get the method
+	method := reflect.NewValue(obji).Method( int( (*C.nativemethod_data)(data).method ) )
+
+	// Do the number of input parameters match?
+	if method.Type().(*reflect.FuncType).NumIn() != int(argumentCount)+1 {
+		panic( "Incorrect number of function arguments" )
+	}
+
+	// Perform the call
+	ret := docall( (*Context)(ctx), method, argumentCount, arguments )
+	return unsafe.Pointer( ret )
 }
 

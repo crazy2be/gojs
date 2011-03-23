@@ -195,3 +195,72 @@ JSClassRef JSClassDefinition_NativeObject()
 	return JSClassCreate( &def );
 }
 
+//=========================================================
+// Native Method
+//---------------------------------------------------------
+
+void*	new_nativemethod_data( void* typ, void* addr, unsigned method )
+{
+	nativemethod_data* ptr = (nativemethod_data*)malloc( sizeof(nativemethod_data) );
+	if ( ptr ) {
+		ptr->typ = typ;
+		ptr->addr = addr;
+		ptr->method = method;
+	}
+	return ptr;
+}
+
+static void nativemethod_Finalize(JSObjectRef object)
+{
+	void* data = JSObjectGetPrivate( object );
+	free( data );
+}
+
+static JSValueRef nativemethod_CallAsFunction(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
+{
+	assert( exception );
+
+	// Routine must set private to callback point in Go
+	void* data = JSObjectGetPrivate( function );
+	JSValueRef ret = nativemethod_CallAsFunction_go( data, (void*)ctx, (void*)function, (void*)thisObject, argumentCount, (void*)arguments, (void**)exception );
+	assert( *exception==NULL || (*exception && !ret) );
+	return ret;
+}
+
+static JSValueRef nativemethod_ConvertToType(JSContextRef ctx, JSObjectRef object, JSType type, JSValueRef* exception)
+{
+	if ( type == kJSTypeString ) {
+		JSStringRef str = JSStringCreateWithUTF8CString( "nativemethod" );
+		JSValueRef ret = JSValueMakeString( ctx, str );
+		JSStringRelease( str );
+		return ret;
+	}
+
+	return 0;
+}
+
+JSClassRef JSClassDefinition_NativeMethod()
+{
+	static JSClassDefinition def = {
+		0,
+		kJSClassAttributeNone,
+		"nativemethod",
+		NULL,
+        	NULL, // staticValues;
+    		NULL, // staticFunctions;
+		NULL, // initialize;
+		nativemethod_Finalize, // finalize;
+		NULL, // hasProperty;
+		NULL, // getProperty;
+		NULL, // setProperty;
+		NULL, // deleteProperty;
+		NULL, // getPropertyNames;
+		nativemethod_CallAsFunction, // callAsFunction;
+		NULL, // callAsConstructor;
+		NULL, // hasInstance;
+		nativemethod_ConvertToType // convertToType;
+	};
+
+	return JSClassCreate( &def );
+}
+
