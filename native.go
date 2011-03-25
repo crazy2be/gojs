@@ -53,9 +53,15 @@ func init() {
 }
 
 func value_to_javascript( ctx *Context, value reflect.Value ) *Value {
+
+	// Handle simple types directly.  These can be identified by their
+	// types in the package 'reflect'.
 	switch value.(type) {
 		case (*reflect.IntValue):
 			r := value.(*reflect.IntValue).Get()
+			return ctx.NewNumberValue( float64(r) )
+		case (*reflect.UintValue):
+			r := value.(*reflect.UintValue).Get()
 			return ctx.NewNumberValue( float64(r) )
 		case (*reflect.FloatValue):
 			r := value.(*reflect.FloatValue).Get()
@@ -65,6 +71,19 @@ func value_to_javascript( ctx *Context, value reflect.Value ) *Value {
 			return ctx.NewStringValue( r )
 	}
 
+	// Allows functions to return JavaScriptCore values and objects
+	// directly.  These we can return without conversion.
+	if value.Type() == reflect.Typeof( (*Value)(nil) ) {
+		// Type is already a JavaScriptCore value
+		return value.Interface().(*Value)
+	}
+	if value.Type() == reflect.Typeof( (*Object)(nil) ) {
+		// Type is already a JavaScriptCore object
+		// nearly there
+		return value.Interface().(*Object).ToValue()
+	}
+
+	// No acceptable conversion found.
 	return nil
 }
 
@@ -133,6 +152,23 @@ func javascript_to_value( field reflect.Value, ctx *Context, value *Value, excep
 			flt, err := ctx.ToNumber( value )
 			if err == nil {
 				field.(*reflect.IntValue).Set( int64(flt) )
+			} else {
+				*exception = unsafe.Pointer( err )
+			}
+
+		case *reflect.UintValue:
+			flt, err := ctx.ToNumber( value )
+			if err == nil {
+				if flt >= 0 {
+					field.(*reflect.UintValue).Set( uint64(flt) )
+				} else {
+					err1, err := ctx.NewError( "Number must be greater than or equal to zero." )
+					if err == nil {
+						*exception = unsafe.Pointer( err1 )
+					} else {
+						*exception = unsafe.Pointer( err )
+					}
+				}
 			} else {
 				*exception = unsafe.Pointer( err )
 			}

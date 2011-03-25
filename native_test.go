@@ -7,6 +7,7 @@ import(
 
 type reflect_object struct {
 	I	int
+	U	uint
 	F	float64
 	S	string
 }
@@ -173,8 +174,36 @@ func TestNativeFunction2(t *testing.T) {
 	}
 }	
 
+func TestNativeFunction3(t *testing.T) {
+	ctx := NewContext()
+	defer ctx.Release()
+
+	callback := func ( a float64, b float64 ) *Value {
+		ret := a + float64(b)
+		return ctx.NewNumberValue( ret )
+	}
+
+	fn := ctx.NewFunctionWithNative( callback )
+	if fn == nil {
+		t.Errorf( "ctx.NewFunctionWithNative failed" )
+		return
+	}
+	if !ctx.IsFunction( fn ) {
+		t.Errorf( "ctx.NewFunctionWithNative returned value that is not a function" )
+	}
+	a := ctx.NewNumberValue( 1.5 )
+	b := ctx.NewNumberValue( 3.0 )
+	val, err := ctx.CallAsFunction( fn, nil, []*Value{ a, b } )
+	if err != nil || val == nil {
+		t.Errorf( "Error executing native function (%v)", ctx.ToStringOrDie(err) )
+	}
+	if ctx.ToNumberOrDie(val)!=4.5 {
+		t.Errorf( "Native function did not return the correct value" )
+	}
+}	
+
 func TestNewNativeObject(t *testing.T) {
-	obj := &reflect_object{ 2, 3.0, "four" }
+	obj := &reflect_object{ -1, 2, 3.0, "four" }
 
 	ctx := NewContext()
 	defer ctx.Release()
@@ -220,7 +249,7 @@ func TestNewNativeObject(t *testing.T) {
 }
 
 func TestNewNativeObjectSet(t *testing.T) {
-	obj := &reflect_object{ 2, 3.0, "four" }
+	obj := &reflect_object{ -1, 2, 3.0, "four" }
 
 	ctx := NewContext()
 	defer ctx.Release()
@@ -229,10 +258,29 @@ func TestNewNativeObjectSet(t *testing.T) {
 	ctx.SetProperty( ctx.GlobalObject(), "n", v.ToValue(), 0 )
 
 	// Set the integer property
-	i := ctx.NewNumberValue( 3 )
+	i := ctx.NewNumberValue( -2 )
 	ctx.SetProperty( v, "I", i, 0 )
-	if obj.I != 3 {
+	if obj.I != -2 {
 		t.Errorf( "ctx.SetProperty did not set integer field correctly" )
+	}
+
+	// Set the unsigned integer property
+	u := ctx.NewNumberValue( 3 )
+	ctx.SetProperty( v, "U", u, 0 )
+	if obj.U != 3 {
+		t.Errorf( "ctx.SetProperty did not set unsigned integer field correctly" )
+	}
+
+	// Set the unsigned integer property
+	u = ctx.NewNumberValue( -3 )
+	err := ctx.SetProperty( v, "U", u, 0 )
+	if err == nil {
+		t.Errorf( "ctx.SetProperty did not set unsigned integer field correctly" )
+	} else {
+		t.Logf( "%v", ctx.ToStringOrDie( err ) )
+	}
+	if obj.U != 3 {
+		t.Errorf( "ctx.SetProperty did not set unsigned integer field correctly" )
 	}
 
 	// Set the float property
@@ -250,7 +298,7 @@ func TestNewNativeObjectSet(t *testing.T) {
 }
 
 func TestNewNativeObjectConvert(t *testing.T) {
-	obj := &reflect_object{ 2, 3.0, "four" }
+	obj := &reflect_object{ -1, 2, 3.0, "four" }
 
 	ctx := NewContext()
 	defer ctx.Release()
@@ -263,7 +311,7 @@ func TestNewNativeObjectConvert(t *testing.T) {
 }
 
 func TestNewNativeObjectMethod(t *testing.T) {
-	obj := &reflect_object{ 2, 3.0, "four" }
+	obj := &reflect_object{ -1, 2, 3.0, "four" }
 
 	ctx := NewContext()
 	defer ctx.Release()
@@ -281,7 +329,7 @@ func TestNewNativeObjectMethod(t *testing.T) {
 		t.Errorf( "ctx.EvaluateScript did not return 'number' result when calling method 'Add'." )
 	}
 	num := ctx.ToNumberOrDie( ret )
-	if num != 5.0 {
+	if num != 2.0 {
 		t.Errorf( "ctx.EvaluateScript incorrect value when accessing native object's field." )
 	}
 
@@ -295,9 +343,8 @@ func TestNewNativeObjectMethod(t *testing.T) {
 		t.Errorf( "ctx.EvaluateScript did not return 'number' result when calling method 'AddWith'." )
 	}
 	num = ctx.ToNumberOrDie( ret )
-	if num != 5.5 {
+	if num != 2.5 {
 		t.Errorf( "ctx.EvaluateScript incorrect value when accessing native object's field." )
 	}
 }
-
 
