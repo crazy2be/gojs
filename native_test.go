@@ -24,6 +24,10 @@ func (o *reflect_object) AddWith( op float64 ) float64 {
 	return float64(o.I) + o.F + op
 }
 
+func (o *reflect_object) Self() *reflect_object {
+	return o
+}
+
 func TestNewFunctionWithCallback(t *testing.T) {
 	var flag bool
 	callback := func (ctx *Context, obj *Object, thisObject *Object, _ []*Value ) (*Value){
@@ -345,6 +349,16 @@ func TestNewNativeObjectMethod(t *testing.T) {
 	num = ctx.ToNumberOrDie( ret )
 	if num != 2.5 {
 		t.Errorf( "ctx.EvaluateScript incorrect value when accessing native object's field." )
+	}
+
+	// Following script access should be successful
+	ret, err = ctx.EvaluateScript( "n.Self()", nil, "./testing.go", 1 )
+	if err != nil || ret == nil {
+		t.Errorf( "ctx.EvaluateScript returned an error (or did not return a result)" )
+		return
+	}
+	if !ctx.IsObject( ret ) {
+		t.Errorf( "ctx.EvaluateScript did not return 'object' result when calling method 'Self'." )
 	}
 }
 

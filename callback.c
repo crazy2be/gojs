@@ -8,6 +8,12 @@
 // Native Callback
 //---------------------------------------------------------
 
+static void nativecallback_Finalize(JSObjectRef object)
+{
+	void* data = JSObjectGetPrivate( object );
+	finalize_go( data );
+}
+
 static JSValueRef nativecallback_CallAsFunction(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
 {
 	assert( exception );
@@ -41,7 +47,7 @@ JSClassRef JSClassDefinition_NativeCallback()
         	NULL, // staticValues;
     		NULL, // staticFunctions;
 		NULL, // initialize;
-		NULL, // finalize;
+		nativecallback_Finalize, // finalize;
 		NULL, // hasProperty;
 		NULL, // getProperty;
 		NULL, // setProperty;
@@ -63,7 +69,7 @@ JSClassRef JSClassDefinition_NativeCallback()
 static void nativefunction_Finalize(JSObjectRef object)
 {
 	void* data = JSObjectGetPrivate( object );
-	free( data );
+	finalize_go( data );
 }
 
 static JSValueRef nativefunction_CallAsFunction(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
@@ -118,20 +124,10 @@ JSClassRef JSClassDefinition_NativeFunction()
 // Native Object
 //---------------------------------------------------------
 
-void*	new_nativeobject_data( void* typ, void* addr )
-{
-	nativeobject_data* ptr = (nativeobject_data*)malloc( sizeof(nativeobject_data) );
-	if ( ptr ) {
-		ptr->typ = typ;
-		ptr->addr = addr;
-	}
-	return ptr;
-}
-
 static void nativeobject_Finalize(JSObjectRef object)
 {
 	void* data = JSObjectGetPrivate( object );
-	free( data );
+	finalize_go( data );
 }
 
 static JSValueRef nativeobject_GetProperty(JSContextRef ctx, JSObjectRef object, JSStringRef propertyName, JSValueRef* exception)
@@ -199,21 +195,10 @@ JSClassRef JSClassDefinition_NativeObject()
 // Native Method
 //---------------------------------------------------------
 
-void*	new_nativemethod_data( void* typ, void* addr, unsigned method )
-{
-	nativemethod_data* ptr = (nativemethod_data*)malloc( sizeof(nativemethod_data) );
-	if ( ptr ) {
-		ptr->typ = typ;
-		ptr->addr = addr;
-		ptr->method = method;
-	}
-	return ptr;
-}
-
 static void nativemethod_Finalize(JSObjectRef object)
 {
 	void* data = JSObjectGetPrivate( object );
-	free( data );
+	finalize_go( data );
 }
 
 static JSValueRef nativemethod_CallAsFunction(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
