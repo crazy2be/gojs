@@ -37,7 +37,7 @@ JSClassRef JSClassDefinition_NativeCallback()
 		0,
 		kJSClassAttributeNone,
 		"nativecallback",
-		NULL,
+		NULL, // parentClass
         	NULL, // staticValues;
     		NULL, // staticFunctions;
 		NULL, // initialize;
@@ -95,7 +95,7 @@ JSClassRef JSClassDefinition_NativeFunction()
 		0,
 		kJSClassAttributeNone,
 		"nativefunction",
-		NULL,
+		NULL, // parentClass
         	NULL, // staticValues;
     		NULL, // staticFunctions;
 		NULL, // initialize;
@@ -176,7 +176,7 @@ JSClassRef JSClassDefinition_NativeObject()
 		0,
 		kJSClassAttributeNone,
 		"nativeobject",
-		NULL,
+		NULL, // parentClass
         	NULL, // staticValues;
     		NULL, // staticFunctions;
 		NULL, // initialize;
@@ -245,7 +245,7 @@ JSClassRef JSClassDefinition_NativeMethod()
 		0,
 		kJSClassAttributeNone,
 		"nativemethod",
-		NULL,
+		NULL, // parentClass
         	NULL, // staticValues;
     		NULL, // staticFunctions;
 		NULL, // initialize;
