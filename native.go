@@ -95,7 +95,7 @@ func value_to_javascript( ctx *Context, value reflect.Value ) *Value {
 	}
 
 	// No acceptable conversion found.
-	return nil
+	panic( "Parameter can not be converted from Go native type." )
 }
 
 func recover_to_javascript( ctx *Context, r interface{} ) *Value {
@@ -113,8 +113,9 @@ func recover_to_javascript( ctx *Context, r interface{} ) *Value {
 		return (*Value)(unsafe.Pointer(ret))
 	}
 
+	// Don't know how to convert this panic into a JavaScript error.
 	// TODO:  Check for error return from NewError
-	ret, _ := ctx.NewError( "Internal Go error" )		
+	ret, _ := ctx.NewError( "Unknown panic from within Go." )		
 	return (*Value)(unsafe.Pointer(ret))
 }
 
@@ -274,11 +275,7 @@ func docall( ctx *Context, val *reflect.FuncValue, argumentCount uint, arguments
 		return nil
 	}
 	// len(out) should be equal to 1
-	ret := value_to_javascript( ctx, out[0] )
-	if ret == nil {
-		panic( "Internal GO error" )
-	}
-	return ret
+	return value_to_javascript( ctx, out[0] )
 }
 
 //export nativefunction_CallAsFunction_go
