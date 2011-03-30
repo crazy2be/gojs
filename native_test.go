@@ -204,7 +204,38 @@ func TestNativeFunction3(t *testing.T) {
 	if ctx.ToNumberOrDie(val)!=4.5 {
 		t.Errorf( "Native function did not return the correct value" )
 	}
-}	
+}
+
+func TestNativeFunctionPanic(t *testing.T) {
+	ctx := NewContext()
+	defer ctx.Release()
+
+	callbacks := [] func() {
+		func () { panic( "Panic!" ) }, func () { panic( os.ENOMEM ) } }
+
+	for _, callback := range callbacks {
+
+	fn := ctx.NewFunctionWithNative( callback )
+	if fn == nil {
+		t.Errorf( "ctx.NewFunctionWithNative failed" )
+		return
+	}
+	if !ctx.IsFunction( fn ) {
+		t.Errorf( "ctx.NewFunctionWithNative returned value that is not a function" )
+	}
+	val, err := ctx.CallAsFunction( fn, nil, nil )
+	if err == nil || val != nil {
+		t.Errorf( "ctx.CallAsFunction did not panic as expected" )
+	}
+	msg := ctx.ToStringOrDie( err )
+	if msg[0:7] != "Error: " {
+		t.Errorf( "ctx.CallAsFunction did return expected error object (%v)", msg )
+	} else {
+		t.Logf( "ctx.CallAsFunction paniced as expected (%v)", msg )
+	}
+
+	}
+}
 
 func TestNewNativeObject(t *testing.T) {
 	obj := &reflect_object{ -1, 2, 3.0, "four" }
