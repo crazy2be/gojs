@@ -85,6 +85,9 @@ func value_to_javascript( ctx *Context, value reflect.Value ) *Value {
 		case (*reflect.StringValue):
 			r := value.(*reflect.StringValue).Get()
 			return ctx.NewStringValue( r )
+		case (*reflect.FuncValue):
+			r := value.Interface()
+			return ctx.NewFunctionWithNative( r ).ToValue()
 		case (*reflect.PtrValue):
 			r := value.(*reflect.PtrValue)
 			if r.IsNil() {
