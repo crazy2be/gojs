@@ -87,8 +87,10 @@ func value_to_javascript( ctx *Context, value reflect.Value ) *Value {
 			return ctx.NewStringValue( r )
 		case (*reflect.PtrValue):
 			r := value.(*reflect.PtrValue)
-			_, ok := r.Elem().(*reflect.StructValue)
-			if ok {
+			if r.IsNil() {
+				return ctx.NewNullValue()
+			}
+			if _, ok := r.Elem().(*reflect.StructValue); ok {
 				ret := ctx.NewNativeObject( value.Interface() )
 				return ret.ToValue()
 			}

@@ -28,6 +28,10 @@ func (o *reflect_object) Self() *reflect_object {
 	return o
 }
 
+func (o *reflect_object) Null() *reflect_object {
+	return nil
+}
+
 func TestNewFunctionWithCallback(t *testing.T) {
 	var flag bool
 	callback := func (ctx *Context, obj *Object, thisObject *Object, _ []*Value ) (*Value){
@@ -390,6 +394,17 @@ func TestNewNativeObjectMethod(t *testing.T) {
 	}
 	if !ctx.IsObject( ret ) {
 		t.Errorf( "ctx.EvaluateScript did not return 'object' result when calling method 'Self'." )
+	}
+
+	// Following script access should be successful
+	ret, err = ctx.EvaluateScript( "n.Null()", nil, "./testing.go", 1 )
+	if err != nil || ret == nil {
+		t.Errorf( "ctx.EvaluateScript 'n.Null()' returned an error (or did not return a result)" )
+		t.Logf( "Error:  %s", ctx.ToStringOrDie(err) )
+		return
+	}
+	if !ctx.IsNull( ret ) {
+		t.Errorf( "ctx.EvaluateScript 'n.Null()'did not return a javascript null value." )
 	}
 }
 
