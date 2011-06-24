@@ -177,7 +177,7 @@ func (e *Error) String() string
 
 ### GoFunctionCallback
 
-type GoFunctionCallback func(ctx *Context, obj *Object, thisObject *Object, arguments []*Value) (ret *Value)
+	type GoFunctionCallback func(ctx *Context, obj *Object, thisObject *Object, arguments []*Value) (ret *Value)
 
 ### Object
 
