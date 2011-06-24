@@ -175,6 +175,8 @@ func (e *Error) String() string
 
 	type GlobalContext Context
 
+### GoFunctionCallback
+
 type GoFunctionCallback func(ctx *Context, obj *Object, thisObject *Object, arguments []*Value) (ret *Value)
 
 ### Object
