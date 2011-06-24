@@ -254,8 +254,12 @@ func TestNewNativeObject(t *testing.T) {
 
 	// Following script access should be successful
 	ret, err := ctx.EvaluateScript("n.F", nil, "./testing.go", 1)
-	if err != nil || ret == nil {
-		t.Errorf("ctx.EvaluateScript returned an error (or did not return a result)")
+	if err != nil {
+		t.Errorf("ctx.EvaluateScript returned an error: %#v", err)
+		return
+	}
+	if ret == nil {
+		t.Errorf("ctx.EvaluateScript did not return a result (no error specified)!")
 		return
 	}
 	if !ctx.IsNumber(ret) {
@@ -362,8 +366,12 @@ func TestNewNativeObjectMethod(t *testing.T) {
 
 	// Following script access should be successful
 	ret, err := ctx.EvaluateScript("n.Add()", nil, "./testing.go", 1)
-	if err != nil || ret == nil {
-		t.Errorf("ctx.EvaluateScript returned an error (or did not return a result)")
+	if err != nil {
+		t.Errorf("ctx.EvaluateScript returned an error: %#v", *err)
+		return
+	}
+	if ret == nil {
+		t.Errorf("ctx.EvaluateScript did not return a result! (no error)")
 		return
 	}
 	if !ctx.IsNumber(ret) {

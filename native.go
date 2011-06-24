@@ -85,10 +85,10 @@ func value_to_javascript(ctx *Context, value reflect.Value) *Value {
 	case (reflect.String):
 		r := value.String()
 		return ctx.NewStringValue(r)
-	case (reflect.Interface):
+	case (reflect.Func):
 		r := value.Interface()
 		return ctx.NewFunctionWithNative(r).ToValue()
-	case (reflect.UnsafePointer):
+	case (reflect.Ptr):
 		r := value
 		if r.IsNil() {
 			return ctx.NewNullValue()
@@ -97,10 +97,12 @@ func value_to_javascript(ctx *Context, value reflect.Value) *Value {
 			ret := ctx.NewNativeObject(value.Interface())
 			return ret.ToValue()
 		}
+	default:
+		// No acceptable conversion found.
+		panic("Parameter can not be converted from Go native type. Type is "+value.Kind().String()+", value is "+value.String())
 	}
 
-	// No acceptable conversion found.
-	panic("Parameter can not be converted from Go native type.")
+	panic("Not reached!")
 }
 
 func recover_to_javascript(ctx *Context, r interface{}) *Value {
