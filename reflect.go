@@ -1,4 +1,4 @@
-package javascriptcore
+package gojs
 
 // #include <stdlib.h>
 import "C"

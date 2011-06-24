@@ -1,4 +1,4 @@
-package javascriptcore
+package gojs
 
 import (
 	"testing"

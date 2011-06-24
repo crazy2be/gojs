@@ -1,4 +1,4 @@
-package javascriptcore
+package gojs
 
 // #include <stdlib.h>
 // #include <JavaScriptCore/JSStringRef.h>
