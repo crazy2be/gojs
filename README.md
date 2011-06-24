@@ -36,6 +36,8 @@ Constants
 Types
 -----
 
+### Context
+
 	type Context struct {
 
 	}
@@ -152,9 +154,13 @@ func (ctx *Context) UnProtectValue(ref *Value)
 
 func (ctx *Context) ValueType(v *Value) uint8
 
+### ContextGroup
+
 	type ContextGroup struct {
 
 	}
+
+### Error
 
 	type Error struct {
 			Name    string
@@ -165,9 +171,13 @@ func (ctx *Context) ValueType(v *Value) uint8
 
 func (e *Error) String() string
 
+### GlobalContext
+
 	type GlobalContext Context
 
 type GoFunctionCallback func(ctx *Context, obj *Object, thisObject *Object, arguments []*Value) (ret *Value)
+
+### Object
 
 	type Object struct {
 
@@ -178,6 +188,8 @@ func (obj *Object) GetPrivate() unsafe.Pointer
 func (obj *Object) SetPrivate(data unsafe.Pointer) bool
 
 func (obj *Object) ToValue() *Value
+
+### PropertyNameArray
 
 	type PropertyNameArray struct {
 
@@ -190,6 +202,8 @@ func (ref *PropertyNameArray) NameAtIndex(index uint16) string
 func (ref *PropertyNameArray) Release()
 
 func (ref *PropertyNameArray) Retain()
+
+### String
 
 	type String struct {
 
@@ -209,9 +223,13 @@ func (ref *String) Retain()
 
 func (ref *String) String() string
 
+### Stringer
+
 	type Stringer interface {
 			String() string
 	}
+
+### Value
 
 	type Value struct {
 
