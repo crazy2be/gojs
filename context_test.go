@@ -1,6 +1,6 @@
 package javascriptcore
 
-import(
+import (
 	"testing"
 )
 
@@ -23,10 +23,9 @@ func TestContextGlobalObject(t *testing.T) {
 
 	obj := ctx.GlobalObject()
 	if obj == nil {
-		t.Errorf( "ctx.GlobalObject() returned nil" )
+		t.Errorf("ctx.GlobalObject() returned nil")
 	}
 	if ctx.ValueType(obj.ToValue()) != TypeObject {
-		t.Errorf( "ctx.GlobalObject() did not return a javascript object" )
+		t.Errorf("ctx.GlobalObject() did not return a javascript object")
 	}
 }
-
