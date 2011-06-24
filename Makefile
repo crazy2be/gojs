@@ -1,6 +1,6 @@
 include $(GOROOT)/src/Make.inc
 
-TARG=javascriptcore
+TARG=gojs
 CGOFILES=\
 	base.go \
 	context.go \
