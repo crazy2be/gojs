@@ -1,7 +1,7 @@
 Go JavaScript Bindings
 ======================
 
-Highly experiemental, I'm not even sure these work currently. Original author is Robery Johnstone, and the mercurial repository can be found at https://bitbucket.org/rj/golang-javascriptcore/. I have updated them to work with the latest changes to the reflect API, the entire test suite minus one function (finally!) passes.
+Highly experiemental, I'm not even sure these work currently. Original author is Robery Johnstone, and the mercurial repository can be found at https://bitbucket.org/rj/golang-javascriptcore/. I have updated the bindings to work with the latest changes to the reflect API, the entire test suite minus one function (finally!) passes.
 
 There's no documentation, because the original had no documentation. If I find a use for this beyond curiousity, I might add that as I go. Below is a dump of all the available functions:
 
