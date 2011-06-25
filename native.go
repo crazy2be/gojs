@@ -227,7 +227,7 @@ func (ctx *Context) NewFunctionWithCallback(callback GoFunctionCallback) *Object
 		0}
 	register(data)
 
-	ret := C.JSObjectMake(C.JSContextRef(unsafe.Pointer(ctx)), nativecallback, unsafe.Pointer(data))
+	ret := C.JSObjectMake(ctx.ref, nativecallback, unsafe.Pointer(data))
 	return (*Object)(unsafe.Pointer(ret))
 }
 
@@ -262,7 +262,7 @@ func (ctx *Context) NewFunctionWithNative(fn interface{}) *Object {
 		0}
 	register(data)
 
-	ret := C.JSObjectMake(C.JSContextRef(unsafe.Pointer(ctx)), nativefunction, unsafe.Pointer(data))
+	ret := C.JSObjectMake(ctx.ref, nativefunction, unsafe.Pointer(data))
 	return (*Object)(unsafe.Pointer(ret))
 }
 
@@ -321,7 +321,7 @@ func (ctx *Context) NewNativeObject(obj interface{}) *Object {
 		0}
 	register(data)
 
-	ret := C.JSObjectMake(C.JSContextRef(unsafe.Pointer(ctx)), nativeobject, unsafe.Pointer(data))
+	ret := C.JSObjectMake(ctx.ref, nativeobject, unsafe.Pointer(data))
 	return (*Object)(unsafe.Pointer(ret))
 }
 
@@ -366,7 +366,7 @@ func internal_go_error(ctx *Context) *Value {
 	param := ctx.NewStringValue("Internal Go error.")
 
 	exception := (*Value)(nil)
-	ret := C.JSObjectMakeError(C.JSContextRef(unsafe.Pointer(ctx)),
+	ret := C.JSObjectMakeError(ctx.ref,
 		C.size_t(1), (*C.JSValueRef)(unsafe.Pointer(&param)),
 		(*C.JSValueRef)(unsafe.Pointer(&exception)))
 	if ret != nil {
@@ -432,7 +432,7 @@ func newNativeMethod(ctx *Context, obj *object_data, method int) *Object {
 		method}
 	register(data)
 
-	ret := C.JSObjectMake(C.JSContextRef(unsafe.Pointer(ctx)), nativemethod, unsafe.Pointer(data))
+	ret := C.JSObjectMake(ctx.ref, nativemethod, unsafe.Pointer(data))
 	return (*Object)(unsafe.Pointer(ret))
 }
 

@@ -2,7 +2,7 @@ package gojs_test
 
 import (
 	"testing"
-	js "javascriptcore"
+	"gojs"
 )
 
 var (
@@ -10,12 +10,12 @@ var (
 )
 
 func TestString(t *testing.T) {
-	str := js.NewString("a string")
+	str := gojs.NewString("a string")
 	defer str.Release()
 }
 
 func TestString2(t *testing.T) {
-	str := js.NewString("a string")
+	str := gojs.NewString("a string")
 	defer str.Release()
 
 	str.Retain()
@@ -24,7 +24,7 @@ func TestString2(t *testing.T) {
 
 func TestStringString(t *testing.T) {
 	for _, item := range strtests {
-		str := js.NewString(item)
+		str := gojs.NewString(item)
 		defer str.Release()
 
 		if str.String() != item {
@@ -37,11 +37,11 @@ func TestStringString(t *testing.T) {
 }
 
 func TestStringEqual(t *testing.T) {
-	lhs := js.NewString("dummy")
+	lhs := gojs.NewString("dummy")
 	defer lhs.Release()
 
 	for _, item := range strtests {
-		str := js.NewString(item)
+		str := gojs.NewString(item)
 		defer str.Release()
 
 		if lhs.Equal(str) {
@@ -54,7 +54,7 @@ func TestStringEqual(t *testing.T) {
 			t.Errorf("String did not compared as equal to itself \"%v\", and \"%v\"", str)
 		}
 
-		str2 := js.NewString(item)
+		str2 := gojs.NewString(item)
 		defer str2.Release()
 		if !str.Equal(str2) {
 			t.Errorf("String did not compared as equal to itself \"%v\", and \"%v\"", str2)
@@ -63,11 +63,11 @@ func TestStringEqual(t *testing.T) {
 }
 
 func TestStringEqualToString(t *testing.T) {
-	lhs := js.NewString("dummy")
+	lhs := gojs.NewString("dummy")
 	defer lhs.Release()
 
 	for _, item := range strtests {
-		str := js.NewString(item)
+		str := gojs.NewString(item)
 		defer str.Release()
 
 		if lhs.EqualToString(item) {

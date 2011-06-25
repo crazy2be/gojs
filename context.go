@@ -8,19 +8,21 @@ import "unsafe"
 func NewContext() *Context {
 	const c_nil = unsafe.Pointer(uintptr(0))
 
-	ctx := C.JSGlobalContextCreate((*[0]uint8)(c_nil))
-	return (*Context)(unsafe.Pointer(ctx))
+	ctx := new(Context)
+	
+	ctx.ref = C.JSContextRef(C.JSGlobalContextCreate((*[0]uint8)(c_nil)))
+	return ctx
 }
 
 func (ctx *Context) Retain() {
-	C.JSGlobalContextRetain(C.JSContextRef(unsafe.Pointer(ctx)))
+	C.JSGlobalContextRetain(ctx.ref)
 }
 
 func (ctx *Context) Release() {
-	C.JSGlobalContextRelease(C.JSContextRef(unsafe.Pointer(ctx)))
+	C.JSGlobalContextRelease(ctx.ref)
 }
 
 func (ctx *Context) GlobalObject() *Object {
-	ret := C.JSContextGetGlobalObject(C.JSContextRef(unsafe.Pointer(ctx)))
+	ret := C.JSContextGetGlobalObject(ctx.ref)
 	return (*Object)(unsafe.Pointer(ret))
 }

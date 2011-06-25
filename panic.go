@@ -23,7 +23,7 @@ func newPanicError(ctx *Context, value *Value) *Error {
 
 	if typ == TypeString || typ == TypeNumber || typ == TypeBoolean {
 		var exception C.JSValueRef
-		ret := C.JSValueToStringCopy(C.JSContextRef(unsafe.Pointer(ctx)), C.JSValueRef(unsafe.Pointer(value)), &exception)
+		ret := C.JSValueToStringCopy(ctx.ref, C.JSValueRef(unsafe.Pointer(value)), &exception)
 		if exception != nil {
 			// An error occurred during extraction of string
 			// Let's not go to far down the rabbit hole
