@@ -32,21 +32,24 @@ func TestEvaluateScript(t *testing.T) {
 	defer ctx.Release()
 
 	for index, item := range basetests {
+		tlog(t, "On item", item, "index", index)
 		ret, err := ctx.EvaluateScript(item.script, nil, "./testing.go", 1)
+		tlog(t, "Evaluated Script")
 		if item.result != "" {
 			if err != nil {
 				t.Errorf("ctx.EvaluateScript raised an error (script %v)", index)
 			} else if ret == nil {
 				t.Errorf("ctx.EvaluateScript failed to return a result (script %v)", index)
 			} else {
-				t.Logf("Type of value is %v\n", ctx.ValueType(ret))
+				tlog(t, "No error, and there was a return result.")
+				tlog(t, "Type of value is", ctx.ValueType(ret))
 				valuetype := ctx.ValueType(ret)
 				if valuetype != item.valuetype {
-					t.Errorf("ctx.EvaluateScript did not return the expected type (%v instead of %v).", valuetype, item.valuetype)
+					terrf(t, "ctx.EvaluateScript did not return the expected type (%v instead of %v).", valuetype, item.valuetype)
 				}
 				stringval := ctx.ToStringOrDie(ret)
 				if stringval != item.result {
-					t.Errorf("ctx.EvaluateScript returned an incorrect value (%v instead of %v).", stringval, item.result)
+					terrf(t, "ctx.EvaluateScript returned an incorrect value (%v instead of %v).", stringval, item.result)
 				}
 			}
 		} else {

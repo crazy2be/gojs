@@ -8,7 +8,7 @@ func TestNewObject(t *testing.T) {
 	ctx := NewContext()
 	defer ctx.Release()
 
-	val := ctx.NewObject()
+	val := ctx.NewEmptyObject()
 	if val == nil {
 		t.Errorf("ctx.NewObject returned a nil poitner")
 	}

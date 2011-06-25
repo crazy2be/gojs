@@ -5,6 +5,7 @@ package gojs
 // #include <JavaScriptCore/JSValueRef.h>
 import "C"
 import "os"
+import "fmt"
 import "unsafe"
 
 type Error struct {
@@ -14,8 +15,26 @@ type Error struct {
 	Value   *Value
 }
 
-func (e *Error) String() string {
-	return e.Name + ": " + e.Message
+type Exception struct {
+	msg string // Code error value, string.
+	val *Value // Javascript error value, could be any type
+	ctx *Context
+}
+
+// Used for reporting errors in javascipt code to go code
+func (ctx *Context) NewException() *Exception {
+	err := new(Exception)
+	err.ctx = ctx
+	return err
+}
+
+// Attempts to convert the error to a string. Pretty-prints with %#v if unable to.
+func (e *Exception) String() string {
+	str, err := e.ctx.ToString(e.val)
+	if err != nil {
+		return fmt.Sprintf("%#v (failed to convert to string) %s", e, e.msg)
+	}
+	return fmt.Sprintf("%#v (string representation: %s %s", e, str, e.msg)
 }
 
 func newPanicError(ctx *Context, value *Value) *Error {
@@ -31,7 +50,7 @@ func newPanicError(ctx *Context, value *Value) *Error {
 		}
 		defer C.JSStringRelease(ret)
 
-		return &Error{"Error", (*String)(unsafe.Pointer(ret)).String(), ctx, value}
+		return &Error{"", (*String)(unsafe.Pointer(ret)).String(), ctx, value}
 	}
 
 	if typ == TypeObject {
@@ -57,5 +76,5 @@ func newPanicError(ctx *Context, value *Value) *Error {
 	}
 
 	// Not certain what else to make of the error
-	return &Error{"Error", "Unknown error", ctx, value}
+	return &Error{"Unknown", "Unknown error", ctx, value}
 }

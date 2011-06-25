@@ -72,6 +72,19 @@ func tlog(t *testing.T, v ...interface{}) {
 	return
 }
 
+func terrf(t *testing.T, format string, v ...interface{}) {
+	if TESTING_DEBUG_LOG {
+		log.Printf(format, v...)
+		t.Fail()
+	} else {
+		t.Errorf(format, v...)
+	}
+}
+
+func init() {
+	log.SetFlags(log.Ltime|log.Lshortfile)
+}
+
 func TestNewFunctionWithCallback2(t *testing.T) {
 	callback := func(ctx *Context, obj *Object, thisObject *Object, args []*Value) *Value {
 		tlog(t, "In callback function!")

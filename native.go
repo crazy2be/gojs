@@ -89,20 +89,31 @@ func value_to_javascript(ctx *Context, value reflect.Value) *Value {
 		r := value.Interface()
 		return ctx.NewFunctionWithNative(r).ToValue()
 	case (reflect.Ptr):
-		r := value
-		if r.IsNil() {
+		if value.IsNil() {
 			return ctx.NewNullValue()
 		}
-		if r.Elem().Kind() == reflect.Struct {
+		r := value.Elem()
+		if r.Kind() == reflect.Struct {
 			ret := ctx.NewNativeObject(value.Interface())
 			return ret.ToValue()
 		}
-	default:
-		// No acceptable conversion found.
-		panic("Parameter can not be converted from Go native type. Type is "+value.Kind().String()+", value is "+value.String())
+		if r.Kind() == reflect.Array {
+			//arr := make([]*Value, 0)
+			return ctx.NewNullValue()
+		}
+// 			log.Println(r.Len())
+// 			var arr = make([]*Value, r.Len())
+// 			for i := 0; i < len(arr); i++ {
+// 				arr[i] = ctx.NewValue(r.Index(i))
+// 			}
+// 			ret, err := ctx.NewArray(arr)
+// 			_ = err
+// 			return ret.ToValue()
+// 		}
+		panic(r.Elem().Kind())
 	}
-
-	panic("Not reached!")
+	// No acceptable conversion found.
+	panic("Parameter can not be converted from Go native type. Type is "+value.Kind().String()+", value is "+value.String())
 }
 
 func recover_to_javascript(ctx *Context, r interface{}) *Value {
@@ -365,15 +376,15 @@ func nativeobject_GetProperty_go(data_ptr, ctx, _, propertyName unsafe.Pointer, 
 func internal_go_error(ctx *Context) *Value {
 	param := ctx.NewStringValue("Internal Go error.")
 
-	exception := (*Value)(nil)
+	exception := C.JSValueRef(unsafe.Pointer(nil))
 	ret := C.JSObjectMakeError(ctx.ref,
-		C.size_t(1), (*C.JSValueRef)(unsafe.Pointer(&param)),
-		(*C.JSValueRef)(unsafe.Pointer(&exception)))
+		C.size_t(1), &param.ref,
+		&exception)
 	if ret != nil {
-		return (*Value)(unsafe.Pointer(ret))
+		return ctx.NewObject(ret).ToValue()
 	}
 	if exception != nil {
-		return exception
+		return ctx.newValue(exception)
 	}
 	panic("Internal Go error.")
 }

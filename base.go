@@ -28,12 +28,16 @@ func (ctx *Context) EvaluateScript(script string, obj *Object, source_url string
 		sourceRef = NewString(source_url)
 		defer sourceRef.Release()
 	}
+	
+	if obj == nil {
+		obj = ctx.NewEmptyObject()
+	}
 
-	var exception C.JSValueRef
+	exception := ctx.NewException()
 
 	ret := C.JSEvaluateScript(ctx.ref,
-		C.JSStringRef(unsafe.Pointer(scriptRef)), C.JSObjectRef(unsafe.Pointer(obj)),
-		C.JSStringRef(unsafe.Pointer(sourceRef)), C.int(startingLineNumber), &exception)
+		C.JSStringRef(unsafe.Pointer(scriptRef)), obj.ref,
+		C.JSStringRef(unsafe.Pointer(sourceRef)), C.int(startingLineNumber), &exception.val.ref)
 	if ret == nil {
 		// An error occurred
 		// Error information should be stored in exception
@@ -41,7 +45,7 @@ func (ctx *Context) EvaluateScript(script string, obj *Object, source_url string
 	}
 
 	// Successful evaluation
-	return (*Value)(unsafe.Pointer(ret)), nil
+	return ctx.NewValue(ret), nil
 }
 
 func (ctx *Context) CheckScriptSyntax(script string, source_url string, startingLineNumber int) *Value {

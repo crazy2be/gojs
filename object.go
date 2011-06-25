@@ -8,7 +8,8 @@ import "C"
 import "unsafe"
 
 type Object struct {
-
+	ref C.JSObjectRef
+	ctx *Context
 }
 
 func release_jsstringref_array(refs []C.JSStringRef) {
@@ -19,9 +20,18 @@ func release_jsstringref_array(refs []C.JSStringRef) {
 	}
 }
 
-func (ctx *Context) NewObject() *Object {
-	ret := C.JSObjectMake(ctx.ref, nil, nil)
-	return (*Object)(unsafe.Pointer(ret))
+func (ctx *Context) NewObject(ref C.JSObjectRef) *Object {
+	obj := new(Object)
+	obj.ref = ref
+	obj.ctx = ctx
+	return obj
+	//ret := 
+	//return (*Object)(unsafe.Pointer(ret))
+}
+
+func (ctx *Context) NewEmptyObject() *Object {
+	obj := C.JSObjectMake(ctx.ref, nil, nil)
+	return ctx.NewObject(obj)
 }
 
 func (ctx *Context) NewArray(items []*Value) (*Object, *Value) {
@@ -61,10 +71,10 @@ func (ctx *Context) NewDateWithMilliseconds(milliseconds float64) (*Object, *Val
 	param := ctx.NewNumberValue(milliseconds)
 
 	ret := C.JSObjectMakeDate(ctx.ref,
-		C.size_t(1), (*C.JSValueRef)(unsafe.Pointer(&param)),
+		C.size_t(1), &param.ref,
 		&exception)
 	if exception != nil {
-		return nil, (*Value)(unsafe.Pointer(exception))
+		return nil, ctx.newValue(exception)
 	}
 	return (*Object)(unsafe.Pointer(ret)), nil
 }
@@ -83,6 +93,7 @@ func (ctx *Context) NewDateWithString(date string) (*Object, *Value) {
 	return (*Object)(unsafe.Pointer(ret)), nil
 }
 
+// Used for reporting errors in go code to javascript.
 func (ctx *Context) NewError(message string) (*Object, *Value) {
 	var exception C.JSValueRef
 
