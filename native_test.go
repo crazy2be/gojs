@@ -153,12 +153,12 @@ func TestNewFunctionWithCallbackPanic(t *testing.T) {
 		if val != nil {
 			t.Errorf("ctx.NewFunctionWithCallback that panicked returned a value")
 		}
-		if err == nil || !ctx.IsObject(err) {
+		if err == nil || !ctx.IsObject(err.val) {
 			t.Errorf("ctx.NewFunctionWithCallback that panicked did not set exception")
 		}
-		if ctx.ToStringOrDie(err) != "Error: "+error_msgs[index] {
+		if ctx.ToStringOrDie(err.val) != "Error: "+error_msgs[index] {
 			t.Errorf("ctx.NewFunctionWithCallback that panicked did not set exception message (%v,%v)",
-				ctx.ToStringOrDie(err), error_msgs[index])
+				ctx.ToStringOrDie(err.val), error_msgs[index])
 		}
 
 	} // for
@@ -209,8 +209,8 @@ func TestNativeFunction2(t *testing.T) {
 	a := ctx.NewNumberValue(1.5)
 	b := ctx.NewNumberValue(3.0)
 	val, err := ctx.CallAsFunction(fn, nil, []*Value{a, b})
-	if err != nil || val == nil {
-		t.Errorf("Error executing native function (%v)", ctx.ToStringOrDie(err))
+	if err.val != nil || val == nil {
+		t.Errorf("Error executing native function (%v)", ctx.ToStringOrDie(err.val))
 	}
 	if ctx.ToNumberOrDie(val) != 4.5 {
 		t.Errorf("Native function did not return the correct value")
@@ -237,8 +237,8 @@ func TestNativeFunction3(t *testing.T) {
 	a := ctx.NewNumberValue(1.5)
 	b := ctx.NewNumberValue(3.0)
 	val, err := ctx.CallAsFunction(fn, nil, []*Value{a, b})
-	if err != nil || val == nil {
-		t.Errorf("Error executing native function (%v)", ctx.ToStringOrDie(err))
+	if err.val != nil || val == nil {
+		t.Errorf("Error executing native function (%v)", ctx.ToStringOrDie(err.val))
 	}
 	if ctx.ToNumberOrDie(val) != 4.5 {
 		t.Errorf("Native function did not return the correct value")
@@ -263,10 +263,10 @@ func TestNativeFunctionPanic(t *testing.T) {
 			t.Errorf("ctx.NewFunctionWithNative returned value that is not a function")
 		}
 		val, err := ctx.CallAsFunction(fn, nil, nil)
-		if err == nil || val != nil {
+		if err.val == nil || val != nil {
 			t.Errorf("ctx.CallAsFunction did not panic as expected")
 		}
-		msg := ctx.ToStringOrDie(err)
+		msg := ctx.ToStringOrDie(err.val)
 		if msg[0:7] != "Error: " {
 			t.Errorf("ctx.CallAsFunction did return expected error object (%v)", msg)
 		} else {
@@ -355,7 +355,7 @@ func TestNewNativeObjectSet(t *testing.T) {
 	if err == nil {
 		t.Errorf("ctx.SetProperty did not set unsigned integer field correctly")
 	} else {
-		t.Logf("%v", ctx.ToStringOrDie(err))
+		t.Logf("%v", err)
 	}
 	if obj.U != 3 {
 		t.Errorf("ctx.SetProperty did not set unsigned integer field correctly")
@@ -443,7 +443,7 @@ func TestNewNativeObjectMethod(t *testing.T) {
 	ret, err = ctx.EvaluateScript("n.Null()", nil, "./testing.go", 1)
 	if err != nil || ret == nil {
 		t.Errorf("ctx.EvaluateScript 'n.Null()' returned an error (or did not return a result)")
-		t.Logf("Error:  %s", ctx.ToStringOrDie(err))
+		t.Logf("Error:  %s", err)
 		return
 	}
 	if !ctx.IsNull(ret) {

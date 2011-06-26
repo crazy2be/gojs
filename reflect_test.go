@@ -98,7 +98,7 @@ func TestNewValueWithFunc(t *testing.T) {
 
 	val2, err := ctx.CallAsFunction(ctx.ToObjectOrDie(val), nil, nil)
 	if err != nil || val2 == nil {
-		t.Errorf("Error executing native function (%v)", ctx.ToStringOrDie(err))
+		t.Errorf("Error executing native function (%v)", err)
 	}
 	if ctx.ToNumberOrDie(val2) != 1 {
 		t.Errorf("Native function did not return the correct value")

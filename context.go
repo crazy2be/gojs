@@ -24,5 +24,5 @@ func (ctx *Context) Release() {
 
 func (ctx *Context) GlobalObject() *Object {
 	ret := C.JSContextGetGlobalObject(ctx.ref)
-	return (*Object)(unsafe.Pointer(ret))
+	return ctx.NewObject(ret)
 }

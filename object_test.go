@@ -23,7 +23,7 @@ func TestNewArray(t *testing.T) {
 
 	val, err := ctx.NewArray(nil)
 	if err != nil {
-		t.Errorf("ctx.NewArray returned an exception (%v)", ctx.ToStringOrDie(err))
+		t.Errorf("ctx.NewArray returned an exception (%v)", err)
 	}
 	if val == nil {
 		t.Errorf("ctx.NewArray returned a nil poitner")
@@ -42,7 +42,7 @@ func TestNewArray2(t *testing.T) {
 
 	val, err := ctx.NewArray([]*Value{a, b})
 	if err != nil {
-		t.Errorf("ctx.NewArray returned an exception (%v)", ctx.ToStringOrDie(err))
+		t.Errorf("ctx.NewArray returned an exception (%v)", err)
 	}
 	if val == nil {
 		t.Errorf("ctx.NewArray returned a nil poitner")
@@ -69,7 +69,7 @@ func TestNewDate(t *testing.T) {
 
 	val, err := ctx.NewDate()
 	if err != nil {
-		t.Errorf("ctx.NewDate returned an exception (%v)", ctx.ToStringOrDie(err))
+		t.Errorf("ctx.NewDate returned an exception (%v)", err)
 	}
 	if val == nil {
 		t.Errorf("ctx.NewDate returned a nil poitner")
@@ -85,7 +85,7 @@ func TestNewDateWithMilliseconds(t *testing.T) {
 
 	val, err := ctx.NewDateWithMilliseconds(3600000)
 	if err != nil {
-		t.Errorf("ctx.NewDateWithMilliseconds returned an exception (%v)", ctx.ToStringOrDie(err))
+		t.Errorf("ctx.NewDateWithMilliseconds returned an exception (%v)", err)
 	}
 	if val == nil {
 		t.Errorf("ctx.NewDateWithMilliseconds returned a nil poitner")
@@ -101,7 +101,7 @@ func TestNewDateWithString(t *testing.T) {
 
 	val, err := ctx.NewDateWithString("01-Oct-2010")
 	if err != nil {
-		t.Errorf("ctx.NewDateWithString returned an exception (%v)", ctx.ToStringOrDie(err))
+		t.Errorf("ctx.NewDateWithString returned an exception (%v)", err)
 	}
 	if val == nil {
 		t.Errorf("ctx.NewDateWithString returned a nil poitner")

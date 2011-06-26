@@ -120,21 +120,21 @@ func recover_to_javascript(ctx *Context, r interface{}) *Value {
 	if re, ok := r.(os.Error); ok {
 		// TODO:  Check for error return from NewError
 		ret, _ := ctx.NewError(re.String())
-		return (*Value)(unsafe.Pointer(ret))
+		return ret.ToValue()
 	}
 	if str, ok := r.(Stringer); ok {
 		ret, _ := ctx.NewError(str.String())
-		return (*Value)(unsafe.Pointer(ret))
+		return ret.ToValue()
 	}
 	if str := reflect.ValueOf(r); str.Kind() == reflect.String {
 		ret, _ := ctx.NewError(str.String())
-		return (*Value)(unsafe.Pointer(ret))
+		return ret.ToValue()
 	}
 
 	// Don't know how to convert this panic into a JavaScript error.
 	// TODO:  Check for error return from NewError
 	ret, _ := ctx.NewError("Unknown panic from within Go.")
-	return (*Value)(unsafe.Pointer(ret))
+	return ret.ToValue()
 }
 
 func javascript_to_reflect(ctx *Context, param []*Value) []reflect.Value {
