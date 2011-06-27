@@ -8,6 +8,7 @@ import "C"
 import "os"
 import "reflect"
 import "unsafe"
+import "log"
 
 type object_data struct {
 	typ    reflect.Type
@@ -98,8 +99,10 @@ func value_to_javascript(ctx *Context, value reflect.Value) *Value {
 			return ret.ToValue()
 		}
 		if r.Kind() == reflect.Array {
-			//arr := make([]*Value, 0)
-			return ctx.NewNullValue()
+			log.Println("About to make new native object from *[0]uint8")
+			ret := ctx.NewNativeObject(value.Interface())
+			log.Println("Made new native object from *[0]uint8")
+			return ret.ToValue()
 		}
 // 			log.Println(r.Len())
 // 			var arr = make([]*Value, r.Len())
