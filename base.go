@@ -45,7 +45,7 @@ func (ctx *Context) EvaluateScript(script string, obj *Object, source_url string
 	}
 
 	// Successful evaluation
-	return ctx.NewValue(ret), nil
+	return ctx.newValue(ret), nil
 }
 
 func (ctx *Context) CheckScriptSyntax(script string, source_url string, startingLineNumber int) *Exception {

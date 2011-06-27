@@ -24,6 +24,7 @@ const (
 func (ctx *Context) ValueType(v *Value) uint8 {
 	fmt.Println(ctx, v)
 	fmt.Printf("%#v %#v\n", ctx, v.ctx)
+	//panic("Invalid pointer value of 0x1 for context!")
 	fmt.Printf("%#v %#v\n", ctx.ref, v.ctx.ref)
 	fmt.Printf("%#v\n", v.ref)
 	fmt.Printf("%d\n", (*v.ref))

@@ -59,6 +59,7 @@ func init() {
 
 func value_to_javascript(ctx *Context, value reflect.Value) *Value {
 
+	panic("")
 	// Allows functions to return JavaScriptCore values and objects
 	// directly.  These we can return without conversion.
 	if value.Type() == reflect.TypeOf((*Value)(nil)) {
@@ -104,15 +105,6 @@ func value_to_javascript(ctx *Context, value reflect.Value) *Value {
 			log.Println("Made new native object from *[0]uint8")
 			return ret.ToValue()
 		}
-// 			log.Println(r.Len())
-// 			var arr = make([]*Value, r.Len())
-// 			for i := 0; i < len(arr); i++ {
-// 				arr[i] = ctx.NewValue(r.Index(i))
-// 			}
-// 			ret, err := ctx.NewArray(arr)
-// 			_ = err
-// 			return ret.ToValue()
-// 		}
 		panic(r.Elem().Kind())
 	}
 	// No acceptable conversion found.
@@ -336,7 +328,7 @@ func (ctx *Context) NewNativeObject(obj interface{}) *Object {
 	register(data)
 
 	ret := C.JSObjectMake(ctx.ref, nativeobject, unsafe.Pointer(data))
-	return (*Object)(unsafe.Pointer(ret))
+	return ctx.NewObject(ret)
 }
 
 //export nativeobject_GetProperty_go
