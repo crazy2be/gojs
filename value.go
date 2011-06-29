@@ -172,7 +172,7 @@ func (ctx *Context) ToObject(ref *Value) (obj *Object, err *Value) {
 	}
 
 	// Successful conversion
-	return (*Object)(unsafe.Pointer(ret)), nil
+	return ctx.newObject(ret), nil
 }
 
 func (ctx *Context) ToObjectOrDie(ref *Value) *Object {

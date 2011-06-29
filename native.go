@@ -57,6 +57,18 @@ func init() {
 	objects = make(map[uintptr]*object_data)
 }
 
+// Given a slice of go-style Values, this function allocates a new array of c-style values and returns a pointer to the first element in the array, along with the length of the array.
+func (ctx *Context) newCValueArray(val []*Value) (*C.JSValueRef, C.size_t) {
+	if len(val) == 0 {
+		return nil, 0
+	}
+	arr := make([]C.JSValueRef, len(val))
+	for i := 0; i < len(val); i++ {
+		arr[i] = val[i].ref
+	}
+	return &arr[0], C.size_t(len(arr))
+}
+
 func value_to_javascript(ctx *Context, value reflect.Value) *Value {
 
 	panic("")
@@ -234,7 +246,7 @@ func (ctx *Context) NewFunctionWithCallback(callback GoFunctionCallback) *Object
 	register(data)
 
 	ret := C.JSObjectMake(ctx.ref, nativecallback, unsafe.Pointer(data))
-	return (*Object)(unsafe.Pointer(ret))
+	return ctx.newObject(ret)
 }
 
 //export nativecallback_CallAsFunction_go
@@ -269,7 +281,7 @@ func (ctx *Context) NewFunctionWithNative(fn interface{}) *Object {
 	register(data)
 
 	ret := C.JSObjectMake(ctx.ref, nativefunction, unsafe.Pointer(data))
-	return (*Object)(unsafe.Pointer(ret))
+	return ctx.newObject(ret)
 }
 
 func docall(ctx *Context, val reflect.Value, argumentCount uint, arguments unsafe.Pointer) *Value {

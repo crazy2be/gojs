@@ -6,6 +6,7 @@ package gojs
 // #include "callback.h"
 import "C"
 import "unsafe"
+import "log"
 
 type Object struct {
 	ref C.JSObjectRef
@@ -20,11 +21,18 @@ func release_jsstringref_array(refs []C.JSStringRef) {
 	}
 }
 
-func (ctx *Context) NewObject(ref C.JSObjectRef) *Object {
+// Creates a new *Object given a C pointer to an JSObjectRef.
+func (ctx *Context) newObject(ref C.JSObjectRef) *Object {
 	obj := new(Object)
 	obj.ref = ref
 	obj.ctx = ctx
 	return obj
+}
+
+// DEPRECATED! Use ctx.newObject() instead, this should be private!
+func (ctx *Context) NewObject(ref C.JSObjectRef) *Object {
+	log.Println("Warning: Use of depricated method NewObject!")
+	return ctx.newObject(ref)
 	//ret := 
 	//return (*Object)(unsafe.Pointer(ret))
 }
@@ -40,7 +48,7 @@ func (ctx *Context) NewArray(items []*Value) (*Object, *Exception) {
 	ret := ctx.NewEmptyObject()
 	if items != nil {
 		ret.ref = C.JSObjectMakeArray(ctx.ref,
-			C.size_t(len(items)), (*C.JSValueRef)(unsafe.Pointer(&items[0])),
+			C.size_t(len(items)), &items[0].ref,
 			&exception.val.ref)
 	} else {
 		ret.ref = C.JSObjectMakeArray(ctx.ref,
@@ -85,7 +93,7 @@ func (ctx *Context) NewDateWithString(date string) (*Object, *Exception) {
 	param := ctx.NewStringValue(date)
 
 	ret := C.JSObjectMakeDate(ctx.ref,
-		C.size_t(1), (*C.JSValueRef)(unsafe.Pointer(&param)),
+		C.size_t(1), &param.ref,
 		&exception.val.ref)
 	if exception != nil {
 		return nil, exception
@@ -100,12 +108,12 @@ func (ctx *Context) NewError(message string) (*Object, *Exception) {
 	param := ctx.NewStringValue(message)
 
 	ret := C.JSObjectMakeError(ctx.ref,
-		C.size_t(1), (*C.JSValueRef)(unsafe.Pointer(&param)),
+		C.size_t(1), &param.ref,
 		&exception.val.ref)
 	if exception != nil {
 		return nil, exception
 	}
-	return (*Object)(unsafe.Pointer(ret)), nil
+	return ctx.newObject(ret), nil
 }
 
 func (ctx *Context) NewRegExp(regex string) (*Object, *Exception) {
@@ -114,24 +122,24 @@ func (ctx *Context) NewRegExp(regex string) (*Object, *Exception) {
 	param := ctx.NewStringValue(regex)
 
 	ret := C.JSObjectMakeRegExp(ctx.ref,
-		C.size_t(1), (*C.JSValueRef)(unsafe.Pointer(&param)),
+		C.size_t(1), &param.ref,
 		&exception.val.ref)
 	if exception != nil {
 		return nil, exception
 	}
-	return (*Object)(unsafe.Pointer(ret)), nil
+	return ctx.newObject(ret), nil
 }
 
 func (ctx *Context) NewRegExpFromValues(parameters []*Value) (*Object, *Exception) {
 	exception := ctx.NewException()
 
 	ret := C.JSObjectMakeRegExp(ctx.ref,
-		C.size_t(len(parameters)), (*C.JSValueRef)(unsafe.Pointer(&parameters[0])),
+		C.size_t(len(parameters)), &parameters[0].ref,
 		&exception.val.ref)
 	if exception != nil {
 		return nil, exception
 	}
-	return (*Object)(unsafe.Pointer(ret)), nil
+	return ctx.newObject(ret), nil
 }
 
 func (ctx *Context) NewFunction(name string, parameters []string, body string, source_url string, starting_line_number int) (*Object, *Exception) {
@@ -164,24 +172,23 @@ func (ctx *Context) NewFunction(name string, parameters []string, body string, s
 	if exception != nil {
 		return nil, exception
 	}
-	return (*Object)(unsafe.Pointer(ret)), nil
+	return ctx.newObject(ret), nil
 }
 
 func (ctx *Context) GetPrototype(obj *Object) *Value {
-	ret := C.JSObjectGetPrototype(ctx.ref, C.JSObjectRef(unsafe.Pointer(obj)))
-	return (*Value)(unsafe.Pointer(ret))
+	ret := C.JSObjectGetPrototype(ctx.ref, obj.ref)
+	return ctx.newValue(ret)
 }
 
 func (ctx *Context) SetPrototype(obj *Object, rhs *Value) {
-	C.JSObjectSetPrototype(ctx.ref,
-		C.JSObjectRef(unsafe.Pointer(obj)), C.JSValueRef(unsafe.Pointer(rhs)))
+	C.JSObjectSetPrototype(ctx.ref, obj.ref, rhs.ref)
 }
 
 func (ctx *Context) HasProperty(obj *Object, name string) bool {
 	jsstr := NewString(name)
 	defer jsstr.Release()
 
-	ret := C.JSObjectHasProperty(ctx.ref, C.JSObjectRef(unsafe.Pointer(obj)), C.JSStringRef(unsafe.Pointer(jsstr)))
+	ret := C.JSObjectHasProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)))
 	return bool(ret)
 }
 
@@ -191,23 +198,23 @@ func (ctx *Context) GetProperty(obj *Object, name string) (*Value, *Exception) {
 
 	exception := ctx.NewException()
 
-	ret := C.JSObjectGetProperty(ctx.ref, C.JSObjectRef(unsafe.Pointer(obj)), C.JSStringRef(unsafe.Pointer(jsstr)), &exception.val.ref)
+	ret := C.JSObjectGetProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), &exception.val.ref)
 	if exception != nil {
 		return nil, exception
 	}
 
-	return (*Value)(unsafe.Pointer(ret)), nil
+	return ctx.newValue(ret), nil
 }
 
 func (ctx *Context) GetPropertyAtIndex(obj *Object, index uint16) (*Value, *Exception) {
 	exception := ctx.NewException()
 
-	ret := C.JSObjectGetPropertyAtIndex(ctx.ref, C.JSObjectRef(unsafe.Pointer(obj)), C.unsigned(index), &exception.val.ref)
+	ret := C.JSObjectGetPropertyAtIndex(ctx.ref, obj.ref, C.unsigned(index), &exception.val.ref)
 	if exception != nil {
 		return nil, exception
 	}
 
-	return (*Value)(unsafe.Pointer(ret)), nil
+	return ctx.newValue(ret), nil
 }
 
 func (ctx *Context) SetProperty(obj *Object, name string, rhs *Value, attributes uint8) *Exception {
@@ -216,7 +223,7 @@ func (ctx *Context) SetProperty(obj *Object, name string, rhs *Value, attributes
 
 	exception := ctx.NewException()
 
-	C.JSObjectSetProperty(ctx.ref, C.JSObjectRef(unsafe.Pointer(obj)), C.JSStringRef(unsafe.Pointer(jsstr)), C.JSValueRef(unsafe.Pointer(rhs)),
+	C.JSObjectSetProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), rhs.ref,
 		(C.JSPropertyAttributes)(attributes), &exception.val.ref)
 	if exception != nil {
 		return exception
@@ -228,8 +235,7 @@ func (ctx *Context) SetProperty(obj *Object, name string, rhs *Value, attributes
 func (ctx *Context) SetPropertyAtIndex(obj *Object, index uint16, rhs *Value) *Exception {
 	exception := ctx.NewException()
 
-	C.JSObjectSetPropertyAtIndex(ctx.ref, C.JSObjectRef(unsafe.Pointer(obj)), C.unsigned(index),
-		C.JSValueRef(unsafe.Pointer(rhs)), &exception.val.ref)
+	C.JSObjectSetPropertyAtIndex(ctx.ref, obj.ref, C.unsigned(index), rhs.ref, &exception.val.ref)
 	if exception != nil {
 		return exception
 	}
@@ -243,7 +249,7 @@ func (ctx *Context) DeleteProperty(obj *Object, name string) (bool, *Exception) 
 
 	exception := ctx.NewException()
 
-	ret := C.JSObjectDeleteProperty(ctx.ref, C.JSObjectRef(unsafe.Pointer(obj)), C.JSStringRef(unsafe.Pointer(jsstr)), &exception.val.ref)
+	ret := C.JSObjectDeleteProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), &exception.val.ref)
 	if exception != nil {
 		return false, exception
 	}
@@ -252,47 +258,51 @@ func (ctx *Context) DeleteProperty(obj *Object, name string) (bool, *Exception) 
 }
 
 func (obj *Object) GetPrivate() unsafe.Pointer {
-	ret := C.JSObjectGetPrivate(C.JSObjectRef(unsafe.Pointer(obj)))
+	ret := C.JSObjectGetPrivate(obj.ref)
 	return ret
 }
 
 func (obj *Object) SetPrivate(data unsafe.Pointer) bool {
-	ret := C.JSObjectSetPrivate(C.JSObjectRef(unsafe.Pointer(obj)), data)
+	ret := C.JSObjectSetPrivate(obj.ref, data)
 	return bool(ret)
 }
 
+// Does this work properly?
 func (obj *Object) ToValue() *Value {
-	return (*Value)(unsafe.Pointer(obj))
+	return obj.ctx.newValue(C.JSValueRef(obj.ref))
 }
 
 func (ctx *Context) IsFunction(obj *Object) bool {
-	ret := C.JSObjectIsFunction(ctx.ref, C.JSObjectRef(unsafe.Pointer(obj)))
+	ret := C.JSObjectIsFunction(ctx.ref, obj.ref)
 	return bool(ret)
 }
 
 func (ctx *Context) CallAsFunction(obj *Object, thisObject *Object, parameters []*Value) (*Value, *Exception) {
 	exception := ctx.NewException()
 
-	var Cparameters *C.JSValueRef
-	if len(parameters) > 0 {
-		Cparameters = (*C.JSValueRef)(unsafe.Pointer(&parameters[0]))
+	Cparameters, n := ctx.newCValueArray(parameters)
+	
+	if thisObject == nil {
+		thisObject = ctx.newObject(nil)
+		log.Println(thisObject.ref)
 	}
-
-	ret := C.JSObjectCallAsFunction(ctx.ref,
-		C.JSObjectRef(unsafe.Pointer(obj)),
-		C.JSObjectRef(unsafe.Pointer(thisObject)),
-		C.size_t(len(parameters)),
-		Cparameters,
-		&exception.val.ref)
+	
+	log.Println("In CallAsFunction, about to enter C mode...")
+	log.Println(obj, thisObject, parameters, Cparameters, exception)
+	
+	ret := C.JSObjectCallAsFunction(ctx.ref, obj.ref, thisObject.ref, n, Cparameters, &exception.val.ref)
+	
+	log.Println("Successfully exited C mode...")
+	
 	if exception != nil {
 		return nil, exception
 	}
 
-	return (*Value)(unsafe.Pointer(ret)), nil
+	return ctx.newValue(ret), nil
 }
 
 func (ctx *Context) IsConstructor(obj *Object) bool {
-	ret := C.JSObjectIsConstructor(ctx.ref, C.JSObjectRef(unsafe.Pointer(obj)))
+	ret := C.JSObjectIsConstructor(ctx.ref, obj.ref)
 	return bool(ret)
 }
 
@@ -304,8 +314,7 @@ func (ctx *Context) CallAsConstructor(obj *Object, parameters []*Value) (*Value,
 		Cparameters = (*C.JSValueRef)(unsafe.Pointer(&parameters[0]))
 	}
 
-	ret := C.JSObjectCallAsConstructor(ctx.ref,
-		C.JSObjectRef(unsafe.Pointer(obj)),
+	ret := C.JSObjectCallAsConstructor(ctx.ref, obj.ref,
 		C.size_t(len(parameters)),
 		Cparameters,
 		&exception.val.ref)
@@ -313,7 +322,7 @@ func (ctx *Context) CallAsConstructor(obj *Object, parameters []*Value) (*Value,
 		return nil, exception
 	}
 
-	return (*Value)(unsafe.Pointer(ret)), nil
+	return ctx.newObject(ret).ToValue(), nil
 }
 
 //=========================================================

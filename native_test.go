@@ -36,6 +36,7 @@ func (o *reflect_object) Null() *reflect_object {
 func TestNewFunctionWithCallback(t *testing.T) {
 	var flag bool
 	callback := func(ctx *Context, obj *Object, thisObject *Object, _ []*Value) *Value {
+		tlog(t, "In callback function!")
 		flag = true
 		return nil
 	}
@@ -48,16 +49,21 @@ func TestNewFunctionWithCallback(t *testing.T) {
 		t.Errorf("ctx.NewFunctionWithCallback failed")
 		return
 	}
+	tlog(t, "Made new function with callback")
 	if !ctx.IsFunction(fn) {
 		t.Errorf("ctx.NewFunctionWithCallback returned value that is not a function")
 	}
+	tlog(t, "Function is a callback function")
 	if ctx.ToStringOrDie(fn.ToValue()) != "nativecallback" {
 		t.Errorf("ctx.NewFunctionWithCallback returned value that does not convert to property string")
 	}
+	tlog(t, "Successfully converted to property string")
+	tlog(t, "Calling as function...")
 	ctx.CallAsFunction(fn, nil, []*Value{})
 	if !flag {
 		t.Errorf("Native function did not execute")
 	}
+	tlog(t, "Called as function.")
 }
 
 // t.Log doesn't print things immediately, this does if TESTING_DEBUG_LOG is set to true. Useful when you have pointer crashes and faults such as are common with cgo code.
