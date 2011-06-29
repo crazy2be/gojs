@@ -30,6 +30,9 @@ func (ctx *Context) NewException() *Exception {
 
 // Attempts to convert the error to a string. Pretty-prints with %#v if unable to.
 func (e *Exception) String() string {
+	if e.ctx == nil || e.val == nil {
+		return "Context or value is nil, cannot return a string representation!"
+	}
 	str, err := e.ctx.ToString(e.val)
 	if err != nil {
 		return fmt.Sprintf("%#v (failed to convert to string) %s", e, e.msg)

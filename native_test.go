@@ -98,11 +98,12 @@ func TestNewFunctionWithCallback2(t *testing.T) {
 			return nil
 		}
 		tlog(t, "Attempting to convert args to numbers...", args)
-		a, err := ctx.ToNumber(args[0])
-		tlog(t, err)
-		tlog(t, "Converted first arg...")
-		b := ctx.ToNumberOrDie(args[1])
-		return ctx.NewNumberValue(a + b)
+		//a, err := ctx.ToNumber(args[0])
+		//tlog(t, err)
+		//tlog(t, "Converted first arg...")
+		//b := ctx.ToNumberOrDie(args[1])
+		//return ctx.NewNumberValue(a + b)
+		return ctx.NewNumberValue(1)
 	}
 
 	tlog(t, "Acquiring context!")
@@ -116,11 +117,13 @@ func TestNewFunctionWithCallback2(t *testing.T) {
 	b := ctx.NewNumberValue(3.0)
 	tlog(t, "Calling callback as function")
 	val, err := ctx.CallAsFunction(fn, nil, []*Value{a, b})
+	tlog(t, "Called callback as function!")
+	tlog(t, err, val)
 	if err != nil || val == nil {
-		t.Errorf("Error executing native callback")
+		t.Fatalf("Error executing native callback")
 	}
 	if ctx.ToNumberOrDie(val) != 4.5 {
-		t.Errorf("Native callback did not return the correct value")
+		t.Fatalf("Native callback did not return the correct value")
 	}
 }
 

@@ -286,13 +286,24 @@ func (ctx *Context) CallAsFunction(obj *Object, thisObject *Object, parameters [
 		thisObject = ctx.newObject(nil)
 		log.Println(thisObject.ref)
 	}
-	
+	if len(parameters) > 0 {
+		str1, err := ctx.ToString(parameters[0])
+		log.Println(str1, err)
+		str2, err := ctx.ToString(parameters[1])
+		log.Println(str2, err)
+		str, err :=  ctx.ToString(ctx.newValue(*Cparameters))
+		log.Println(str, err)
+// 		val2 := ctx.newValue(C.JSValueRef(int(uintptr(unsafe.Pointer(Cparameters)) + 0x1)))
+// 		str2, err := ctx.ToString(val2)
+// 		log.Println(str2, err)
+	}
 	log.Println("In CallAsFunction, about to enter C mode...")
-	log.Println(obj, thisObject, parameters, Cparameters, exception)
+	log.Println(obj, thisObject, parameters, Cparameters, n, exception)
 	
 	ret := C.JSObjectCallAsFunction(ctx.ref, obj.ref, thisObject.ref, n, Cparameters, &exception.val.ref)
 	
 	log.Println("Successfully exited C mode...")
+	log.Println(ret)
 	
 	if exception != nil {
 		return nil, exception

@@ -79,6 +79,9 @@ func (ctx *Context) IsStrictEqual(a *Value, b *Value) bool {
 }
 
 func (ctx *Context) newValue(ref C.JSValueRef) *Value {
+	if ref == nil {
+		return nil
+	}
 	val := new(Value)
 	val.ctx = ctx
 	val.ref = ref
