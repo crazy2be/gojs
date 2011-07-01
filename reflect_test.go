@@ -81,29 +81,29 @@ func TestNewValueWithString(t *testing.T) {
 	}
 }
 
-func TestNewValueWithFunc(t *testing.T) {
-	ctx := NewContext()
-	defer ctx.Release()
-
-	val := ctx.NewValue(func() int { return 1 })
-	if ctx.ValueType(val) != TypeObject {
-		t.Errorf("ctx.ValueType did not return TypeObject")
-	}
-	if !ctx.IsObject(val) {
-		t.Errorf("ctx.IsObject did not return true")
-	}
-	if !ctx.IsFunction(ctx.ToObjectOrDie(val)) {
-		t.Errorf("ctx.IsFunction did not return true")
-	}
-
-	val2, err := ctx.CallAsFunction(ctx.ToObjectOrDie(val), nil, nil)
-	if err != nil || val2 == nil {
-		t.Errorf("Error executing native function (%v)", err)
-	}
-	if ctx.ToNumberOrDie(val2) != 1 {
-		t.Errorf("Native function did not return the correct value")
-	}
-}
+// func TestNewValueWithFunc(t *testing.T) {
+// 	ctx := NewContext()
+// 	defer ctx.Release()
+// 
+// 	val := ctx.NewValue(func() int { return 1 })
+// 	if ctx.ValueType(val) != TypeObject {
+// 		t.Errorf("ctx.ValueType did not return TypeObject")
+// 	}
+// 	if !ctx.IsObject(val) {
+// 		t.Errorf("ctx.IsObject did not return true")
+// 	}
+// 	if !ctx.IsFunction(ctx.ToObjectOrDie(val)) {
+// 		t.Errorf("ctx.IsFunction did not return true")
+// 	}
+// 
+// 	val2, err := ctx.CallAsFunction(ctx.ToObjectOrDie(val), nil, nil)
+// 	if err != nil || val2 == nil {
+// 		t.Errorf("Error executing native function (%v)", err)
+// 	}
+// 	if ctx.ToNumberOrDie(val2) != 1 {
+// 		t.Errorf("Native function did not return the correct value")
+// 	}
+// }
 
 func TestNewValueWithObject(t *testing.T) {
 	ctx := NewContext()
@@ -118,4 +118,8 @@ func TestNewValueWithObject(t *testing.T) {
 	if !ctx.IsObject(val) {
 		t.Errorf("ctx.IsObject did not return true")
 	}
+}
+
+func TestFunctionsArentWorking(t *testing.T) {
+	t.Fatal("Function tests are disabled currently in order to first ensure that the rest of the library works as intended. This test fails to remind users that the test suite is currently incomplete!")
 }
