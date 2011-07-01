@@ -10,6 +10,6 @@ func (ctx *Context) NewValue(value interface{}) *Value {
 		return ctx.NewNullValue()
 	}
 
-	ret := value_to_javascript(ctx, reflect.ValueOf(value))
+	ret := ctx.reflectToJSValue(reflect.ValueOf(value))
 	return ret
 }

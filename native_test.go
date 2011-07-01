@@ -103,7 +103,8 @@ func TestNewFunctionWithCallback2(t *testing.T) {
 		//tlog(t, "Converted first arg...")
 		//b := ctx.ToNumberOrDie(args[1])
 		//return ctx.NewNumberValue(a + b)
-		return ctx.NewNumberValue(1)
+		//return ctx.NewNumberValue(1)
+		return ctx.newValue(nil)
 	}
 
 	tlog(t, "Acquiring context!")

@@ -8,7 +8,6 @@ import "C"
 import "os"
 import "reflect"
 import "unsafe"
-import "log"
 
 type object_data struct {
 	typ    reflect.Type
@@ -69,8 +68,8 @@ func (ctx *Context) newCValueArray(val []*Value) (*C.JSValueRef, C.size_t) {
 	return &arr[0], C.size_t(len(arr))
 }
 
-func value_to_javascript(ctx *Context, value reflect.Value) *Value {
-
+// Given a reflect.Value, this function examines the type and returns a javascript value that best represents the given value. If no acceptable conversion can be found, it panics.
+func (ctx *Context) reflectToJSValue(value reflect.Value) *Value {
 	panic("")
 	// Allows functions to return JavaScriptCore values and objects
 	// directly.  These we can return without conversion.
@@ -112,12 +111,12 @@ func value_to_javascript(ctx *Context, value reflect.Value) *Value {
 			return ret.ToValue()
 		}
 		if r.Kind() == reflect.Array {
-			log.Println("About to make new native object from *[0]uint8")
-			ret := ctx.NewNativeObject(value.Interface())
-			log.Println("Made new native object from *[0]uint8")
-			return ret.ToValue()
+			panic("Called reflectToJSValue() with a pointer to an array or slice. Most likely, this is a native javascript object you are passing by accident, and meant to pass to newValue() rather than NewValue(). If you really are trying to convert a pointer to an array into a native javascript object, dereference it first (slices are pointers internally anyway, so no loss in efficiency).")
+			//log.Println("About to make new native object from *[0]uint8")
+			//ret := ctx.NewNativeObject(value.Interface())
+			//log.Println("Made new native object from *[0]uint8")
+			//return ret.ToValue()
 		}
-		panic(r.Elem().Kind())
 	}
 	// No acceptable conversion found.
 	panic("Parameter can not be converted from Go native type. Type is "+value.Kind().String()+", value is "+value.String())
@@ -144,7 +143,7 @@ func recover_to_javascript(ctx *Context, r interface{}) *Value {
 	return ret.ToValue()
 }
 
-func javascript_to_reflect(ctx *Context, param []*Value) []reflect.Value {
+func (ctx *Context) jsValuesToReflect(param []*Value) []reflect.Value {
 	ret := make([]reflect.Value, len(param))
 
 	for index, item := range param {
@@ -289,7 +288,7 @@ func docall(ctx *Context, val reflect.Value, argumentCount uint, arguments unsaf
 	// an array of reflect.Values.  
 	var in []reflect.Value
 	if argumentCount != 0 {
-		in = javascript_to_reflect((*Context)(ctx), (*[1 << 14]*Value)(arguments)[0:argumentCount])
+		in = ctx.jsValuesToReflect((*[1 << 14]*Value)(arguments)[0:argumentCount])
 	}
 
 	// Step two, perform the call
@@ -300,7 +299,7 @@ func docall(ctx *Context, val reflect.Value, argumentCount uint, arguments unsaf
 		return nil
 	}
 	// len(out) should be equal to 1
-	return value_to_javascript(ctx, out[0])
+	return ctx.reflectToJSValue(out[0])
 }
 
 //export nativefunction_CallAsFunction_go
@@ -340,7 +339,7 @@ func (ctx *Context) NewNativeObject(obj interface{}) *Object {
 	register(data)
 
 	ret := C.JSObjectMake(ctx.ref, nativeobject, unsafe.Pointer(data))
-	return ctx.NewObject(ret)
+	return ctx.newObject(ret)
 }
 
 //export nativeobject_GetProperty_go
@@ -364,7 +363,7 @@ func nativeobject_GetProperty_go(data_ptr, ctx, _, propertyName unsafe.Pointer, 
 	// Can we locate a field with the proper name?
 	field := struct_val.FieldByName(name)
 	if field.IsValid() {
-		return unsafe.Pointer(value_to_javascript((*Context)(ctx), field))
+		return unsafe.Pointer((*Context)(ctx).reflectToJSValue(field).ref)
 	}
 
 	// Can we locate a method with the proper name?
