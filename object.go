@@ -39,23 +39,21 @@ func (ctx *Context) NewObject(ref C.JSObjectRef) *Object {
 
 func (ctx *Context) NewEmptyObject() *Object {
 	obj := C.JSObjectMake(ctx.ref, nil, nil)
-	return ctx.NewObject(obj)
+	return ctx.newObject(obj)
 }
 
 func (ctx *Context) NewArray(items []*Value) (*Object, *Exception) {
 	var exception = ctx.NewException()
 
 	ret := ctx.NewEmptyObject()
+	log.Println(exception)
 	if items != nil {
-		ret.ref = C.JSObjectMakeArray(ctx.ref,
-			C.size_t(len(items)), &items[0].ref,
-			&exception.val.ref)
+		carr, carrlen := ctx.newCValueArray(items)
+		ret.ref = C.JSObjectMakeArray(ctx.ref, carrlen, carr, &exception.val.ref)
 	} else {
-		ret.ref = C.JSObjectMakeArray(ctx.ref,
-			0, nil,
-			&exception.val.ref)
+		ret.ref = C.JSObjectMakeArray(ctx.ref, 0, nil,  &exception.val.ref)
 	}
-	if exception != nil {
+	if exception.val != nil {
 		return nil, exception
 	}
 	return ret, nil
@@ -67,7 +65,7 @@ func (ctx *Context) NewDate() (*Object, *Exception) {
 	ret := C.JSObjectMakeDate(ctx.ref,
 		0, nil,
 		&exception.val.ref)
-	if exception != nil {
+	if exception.val != nil {
 		return nil, exception
 	}
 	return ctx.NewObject(ret), nil
@@ -81,7 +79,7 @@ func (ctx *Context) NewDateWithMilliseconds(milliseconds float64) (*Object, *Exc
 	ret := C.JSObjectMakeDate(ctx.ref,
 		C.size_t(1), &param.ref,
 		&exception.val.ref)
-	if exception != nil {
+	if exception.val != nil {
 		return nil, exception
 	}
 	return ctx.NewObject(ret), nil
@@ -95,25 +93,10 @@ func (ctx *Context) NewDateWithString(date string) (*Object, *Exception) {
 	ret := C.JSObjectMakeDate(ctx.ref,
 		C.size_t(1), &param.ref,
 		&exception.val.ref)
-	if exception != nil {
+	if exception.val != nil {
 		return nil, exception
 	}
 	return ctx.NewObject(ret), nil
-}
-
-// Used for reporting errors in go code to javascript.
-func (ctx *Context) NewError(message string) (*Object, *Exception) {
-	exception := ctx.NewException()
-
-	param := ctx.NewStringValue(message)
-
-	ret := C.JSObjectMakeError(ctx.ref,
-		C.size_t(1), &param.ref,
-		&exception.val.ref)
-	if exception != nil {
-		return nil, exception
-	}
-	return ctx.newObject(ret), nil
 }
 
 func (ctx *Context) NewRegExp(regex string) (*Object, *Exception) {
@@ -124,7 +107,7 @@ func (ctx *Context) NewRegExp(regex string) (*Object, *Exception) {
 	ret := C.JSObjectMakeRegExp(ctx.ref,
 		C.size_t(1), &param.ref,
 		&exception.val.ref)
-	if exception != nil {
+	if exception.val != nil {
 		return nil, exception
 	}
 	return ctx.newObject(ret), nil
@@ -136,7 +119,7 @@ func (ctx *Context) NewRegExpFromValues(parameters []*Value) (*Object, *Exceptio
 	ret := C.JSObjectMakeRegExp(ctx.ref,
 		C.size_t(len(parameters)), &parameters[0].ref,
 		&exception.val.ref)
-	if exception != nil {
+	if exception.val != nil {
 		return nil, exception
 	}
 	return ctx.newObject(ret), nil
@@ -169,7 +152,7 @@ func (ctx *Context) NewFunction(name string, parameters []string, body string, s
 		(C.JSStringRef)(unsafe.Pointer(Cbody)),
 		(C.JSStringRef)(unsafe.Pointer(sourceRef)),
 		C.int(starting_line_number), &exception.val.ref)
-	if exception != nil {
+	if exception.val != nil {
 		return nil, exception
 	}
 	return ctx.newObject(ret), nil
@@ -199,7 +182,7 @@ func (ctx *Context) GetProperty(obj *Object, name string) (*Value, *Exception) {
 	exception := ctx.NewException()
 
 	ret := C.JSObjectGetProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), &exception.val.ref)
-	if exception != nil {
+	if exception.val != nil {
 		return nil, exception
 	}
 
@@ -269,6 +252,14 @@ func (obj *Object) SetPrivate(data unsafe.Pointer) bool {
 
 // Does this work properly?
 func (obj *Object) ToValue() *Value {
+	log.Println(obj)
+	log.Println("In ToValue() function...")
+	if obj == nil {
+		panic("ToValue() called on nil *Object!")
+	}
+	//if obj == nil {
+	//	return nil
+	//}
 	return obj.ctx.newValue(C.JSValueRef(obj.ref))
 }
 
@@ -305,7 +296,7 @@ func (ctx *Context) CallAsFunction(obj *Object, thisObject *Object, parameters [
 	log.Println("Successfully exited C mode...")
 	log.Println(ret)
 	
-	if exception != nil {
+	if exception.val != nil {
 		return nil, exception
 	}
 

@@ -2,7 +2,9 @@ package gojs
 
 // #include <stdlib.h>
 // #include <JavaScriptCore/JSStringRef.h>
+// #include <JavaScriptCore/JSObjectRef.h>
 // #include <JavaScriptCore/JSValueRef.h>
+// #include "callback.h"
 import "C"
 import "os"
 import "fmt"
@@ -15,6 +17,21 @@ type Error struct {
 	Value   *Value
 }
 
+// Used for reporting errors in go code to javascript.
+func (ctx *Context) NewError(message string) (*Object, *Exception) {
+	exception := ctx.NewException()
+
+	param := ctx.NewStringValue(message)
+
+	ret := C.JSObjectMakeError(ctx.ref,
+		C.size_t(1), &param.ref,
+		&exception.val.ref)
+	if exception.val != nil {
+		return nil, exception
+	}
+	return ctx.newObject(ret), nil
+}
+
 type Exception struct {
 	msg string // Code error value, string.
 	val *Value // Javascript error value, could be any type
@@ -25,6 +42,7 @@ type Exception struct {
 func (ctx *Context) NewException() *Exception {
 	err := new(Exception)
 	err.ctx = ctx
+	//err.val = ctx.NewValue(nil)
 	return err
 }
 
@@ -37,7 +55,7 @@ func (e *Exception) String() string {
 	if err != nil {
 		return fmt.Sprintf("%#v (failed to convert to string) %s", e, e.msg)
 	}
-	return fmt.Sprintf("%#v (string representation: %s %s", e, str, e.msg)
+	return fmt.Sprintf("%#v (string representation: %s %s)", e, str, e.msg)
 }
 
 func newPanicError(ctx *Context, value *Value) *Error {

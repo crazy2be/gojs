@@ -22,14 +22,15 @@ func TestNewArray(t *testing.T) {
 	defer ctx.Release()
 
 	val, err := ctx.NewArray(nil)
+	tlog(t, val)
 	if err != nil {
-		t.Errorf("ctx.NewArray returned an exception (%v)", err)
+		t.Fatalf("ctx.NewArray returned an exception (%v)", err)
 	}
 	if val == nil {
-		t.Errorf("ctx.NewArray returned a nil poitner")
+		t.Fatalf("ctx.NewArray returned a nil poitner")
 	}
 	if !ctx.IsObject(val.ToValue()) {
-		t.Errorf("ctx.NewArray failed to return an object (%v)", ctx.ValueType(val.ToValue()))
+		t.Fatalf("ctx.NewArray failed to return an object (%v)", ctx.ValueType(val.ToValue()))
 	}
 }
 
@@ -42,17 +43,17 @@ func TestNewArray2(t *testing.T) {
 
 	val, err := ctx.NewArray([]*Value{a, b})
 	if err != nil {
-		t.Errorf("ctx.NewArray returned an exception (%v)", err)
+		t.Fatalf("ctx.NewArray returned an exception (%v)", err)
 	}
 	if val == nil {
-		t.Errorf("ctx.NewArray returned a nil poitner")
+		t.Fatalf("ctx.NewArray returned a nil poitner")
 	}
 	if !ctx.IsObject(val.ToValue()) {
-		t.Errorf("ctx.NewArray failed to return an object (%v)", ctx.ValueType(val.ToValue()))
+		t.Fatalf("ctx.NewArray failed to return an object (%v)", ctx.ValueType(val.ToValue()))
 	}
 	prop, err := ctx.GetProperty(val, "length")
 	if err != nil || prop == nil {
-		t.Errorf("ctx.NewArray returned object without 'length' property")
+		t.Fatalf("ctx.NewArray returned object without 'length' property")
 	} else {
 		if !ctx.IsNumber(prop) {
 			t.Errorf("ctx.NewArray return object with 'length' property not a number")
@@ -69,13 +70,13 @@ func TestNewDate(t *testing.T) {
 
 	val, err := ctx.NewDate()
 	if err != nil {
-		t.Errorf("ctx.NewDate returned an exception (%v)", err)
+		t.Fatalf("ctx.NewDate returned an exception (%v)", err)
 	}
 	if val == nil {
-		t.Errorf("ctx.NewDate returned a nil poitner")
+		t.Fatalf("ctx.NewDate returned a nil poitner")
 	}
 	if !ctx.IsObject(val.ToValue()) {
-		t.Errorf("ctx.NewDate failed to return an object (%v)", ctx.ValueType(val.ToValue()))
+		t.Fatalf("ctx.NewDate failed to return an object (%v)", ctx.ValueType(val.ToValue()))
 	}
 }
 

@@ -70,7 +70,6 @@ func (ctx *Context) newCValueArray(val []*Value) (*C.JSValueRef, C.size_t) {
 
 // Given a reflect.Value, this function examines the type and returns a javascript value that best represents the given value. If no acceptable conversion can be found, it panics.
 func (ctx *Context) reflectToJSValue(value reflect.Value) *Value {
-	panic("")
 	// Allows functions to return JavaScriptCore values and objects
 	// directly.  These we can return without conversion.
 	if value.Type() == reflect.TypeOf((*Value)(nil)) {
@@ -111,7 +110,7 @@ func (ctx *Context) reflectToJSValue(value reflect.Value) *Value {
 			return ret.ToValue()
 		}
 		if r.Kind() == reflect.Array {
-			panic("Called reflectToJSValue() with a pointer to an array or slice. Most likely, this is a native javascript object you are passing by accident, and meant to pass to newValue() rather than NewValue(). If you really are trying to convert a pointer to an array into a native javascript object, dereference it first (slices are pointers internally anyway, so no loss in efficiency).")
+			panic("Called reflectToJSValue() with a pointer to an array or slice. Most likely, this is a native javascript object you are passing by accident, and meant to pass to newValue() rather than NewValue(). If you really are trying to convert a pointer to an array into a native javascript object, dereference it first (slices are pointers internally anyway, so no significant loss in efficiency).")
 			//log.Println("About to make new native object from *[0]uint8")
 			//ret := ctx.NewNativeObject(value.Interface())
 			//log.Println("Made new native object from *[0]uint8")
@@ -288,6 +287,7 @@ func docall(ctx *Context, val reflect.Value, argumentCount uint, arguments unsaf
 	// an array of reflect.Values.  
 	var in []reflect.Value
 	if argumentCount != 0 {
+		// wtf????
 		in = ctx.jsValuesToReflect((*[1 << 14]*Value)(arguments)[0:argumentCount])
 	}
 
@@ -321,7 +321,7 @@ func nativefunction_CallAsFunction_go(data_ptr unsafe.Pointer, ctx unsafe.Pointe
 	}
 
 	ret := docall((*Context)(ctx), val, argumentCount, arguments)
-	return unsafe.Pointer(ret)
+	return unsafe.Pointer(ret.ref)
 }
 
 //=========================================================
@@ -371,7 +371,7 @@ func nativeobject_GetProperty_go(data_ptr, ctx, _, propertyName unsafe.Pointer, 
 	for lp := 0; lp < typ.NumMethod(); lp++ {
 		if typ.Method(lp).Name == name {
 			ret := newNativeMethod((*Context)(ctx), data, lp)
-			return unsafe.Pointer(ret)
+			return unsafe.Pointer(ret.ref)
 		}
 	}
 
@@ -379,18 +379,19 @@ func nativeobject_GetProperty_go(data_ptr, ctx, _, propertyName unsafe.Pointer, 
 	return nil
 }
 
-func internal_go_error(ctx *Context) *Value {
+func internal_go_error(ctx *Context) *Exception {
 	param := ctx.NewStringValue("Internal Go error.")
 
-	exception := C.JSValueRef(unsafe.Pointer(nil))
+	exception := ctx.NewException()//C.JSValueRef(unsafe.Pointer(nil))
 	ret := C.JSObjectMakeError(ctx.ref,
 		C.size_t(1), &param.ref,
-		&exception)
+		&exception.val.ref)
 	if ret != nil {
-		return ctx.NewObject(ret).ToValue()
+		exception.val.ref = ctx.newObject(ret).ToValue().ref
+		return exception
 	}
 	if exception != nil {
-		return ctx.newValue(exception)
+		return exception
 	}
 	panic("Internal Go error.")
 }
@@ -410,7 +411,7 @@ func nativeobject_SetProperty_go(data_ptr, ctx, _, propertyName, value unsafe.Po
 	}
 	struct_val := val
 	if struct_val.Kind() != reflect.Struct {
-		*exception = unsafe.Pointer(internal_go_error((*Context)(ctx)))
+		*exception = unsafe.Pointer(internal_go_error((*Context)(ctx)).val.ref)
 		return 1
 	}
 
@@ -450,7 +451,7 @@ func newNativeMethod(ctx *Context, obj *object_data, method int) *Object {
 	register(data)
 
 	ret := C.JSObjectMake(ctx.ref, nativemethod, unsafe.Pointer(data))
-	return (*Object)(unsafe.Pointer(ret))
+	return ctx.newObject(ret)
 }
 
 //export nativemethod_CallAsFunction_go
@@ -474,5 +475,5 @@ func nativemethod_CallAsFunction_go(data_ptr, ctx, obj, thisObject unsafe.Pointe
 
 	// Perform the call
 	ret := docall((*Context)(ctx), method, argumentCount, arguments)
-	return unsafe.Pointer(ret)
+	return unsafe.Pointer(ret.ref)
 }
