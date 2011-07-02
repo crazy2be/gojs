@@ -14,6 +14,13 @@ func NewContext() *Context {
 	return ctx
 }
 
+func newContext(ref C.JSContextRef) *Context {
+	ctx := new(Context)
+	ctx.ref = ref
+	
+	return ctx
+}
+
 func (ctx *Context) Retain() {
 	C.JSGlobalContextRetain(ctx.ref)
 }

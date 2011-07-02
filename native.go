@@ -8,6 +8,7 @@ import "C"
 import "os"
 import "reflect"
 import "unsafe"
+import "log"
 
 type object_data struct {
 	typ    reflect.Type
@@ -66,6 +67,15 @@ func (ctx *Context) newCValueArray(val []*Value) (*C.JSValueRef, C.size_t) {
 		arr[i] = val[i].ref
 	}
 	return &arr[0], C.size_t(len(arr))
+}
+
+func (ctx *Context) newGoValueArray(ptr unsafe.Pointer, size uint) ([]*Value) {
+	goarr := make([]*Value, size)
+	for i := uint(0); i < size; i++ {
+		goarr[i] = ctx.newValue(C.JSValueRef(ptr))
+		ptr = unsafe.Pointer(4+uintptr(ptr))
+	}
+	return goarr
 }
 
 // Given a reflect.Value, this function examines the type and returns a javascript value that best represents the given value. If no acceptable conversion can be found, it panics.
@@ -248,17 +258,23 @@ func (ctx *Context) NewFunctionWithCallback(callback GoFunctionCallback) *Object
 }
 
 //export nativecallback_CallAsFunction_go
-func nativecallback_CallAsFunction_go(data_ptr unsafe.Pointer, ctx unsafe.Pointer, obj unsafe.Pointer, thisObject unsafe.Pointer, argumentCount uint, arguments unsafe.Pointer, exception *unsafe.Pointer) unsafe.Pointer {
+func nativecallback_CallAsFunction_go(data_ptr unsafe.Pointer, uctx unsafe.Pointer, uobj unsafe.Pointer, uthisObject unsafe.Pointer, argumentCount uint, arguments unsafe.Pointer, exception *unsafe.Pointer) unsafe.Pointer {
+	ctx := newContext(C.JSContextRef(uctx))
 	defer func() {
 		if r := recover(); r != nil {
-			*exception = unsafe.Pointer(recover_to_javascript((*Context)(ctx), r))
+			*exception = unsafe.Pointer(recover_to_javascript(ctx, r).ref)
 		}
 	}()
+	
+	log.Println(data_ptr, uctx, ctx, uobj, uthisObject, argumentCount, arguments, exception)
 
 	data := (*object_data)(data_ptr)
 	ret := data.val.Interface().(GoFunctionCallback)(
-		(*Context)(ctx), (*Object)(obj), (*Object)(thisObject), (*[1 << 14]*Value)(arguments)[0:argumentCount])
-	return unsafe.Pointer(ret)
+		ctx, ctx.newObject(C.JSObjectRef(uobj)), ctx.newObject(C.JSObjectRef(uthisObject)), ctx.newGoValueArray(arguments, argumentCount)/*(*[1 << 14]*Value)(arguments)[0:argumentCount]*/)
+	if ret == nil {
+		return unsafe.Pointer(nil)
+	}
+	return unsafe.Pointer(ret.ref)
 }
 
 //=========================================================
@@ -303,10 +319,11 @@ func docall(ctx *Context, val reflect.Value, argumentCount uint, arguments unsaf
 }
 
 //export nativefunction_CallAsFunction_go
-func nativefunction_CallAsFunction_go(data_ptr unsafe.Pointer, ctx unsafe.Pointer, _ unsafe.Pointer, _ unsafe.Pointer, argumentCount uint, arguments unsafe.Pointer, exception *unsafe.Pointer) unsafe.Pointer {
+func nativefunction_CallAsFunction_go(data_ptr unsafe.Pointer, uctx unsafe.Pointer, _ unsafe.Pointer, _ unsafe.Pointer, argumentCount uint, arguments unsafe.Pointer, exception *unsafe.Pointer) unsafe.Pointer {
+	ctx := newContext(C.JSContextRef(uctx))
 	defer func() {
 		if r := recover(); r != nil {
-			*exception = unsafe.Pointer(recover_to_javascript((*Context)(ctx), r))
+			*exception = unsafe.Pointer(recover_to_javascript(ctx, r))
 		}
 	}()
 
@@ -320,7 +337,7 @@ func nativefunction_CallAsFunction_go(data_ptr unsafe.Pointer, ctx unsafe.Pointe
 		panic("Incorrect number of function arguments")
 	}
 
-	ret := docall((*Context)(ctx), val, argumentCount, arguments)
+	ret := docall(ctx, val, argumentCount, arguments)
 	return unsafe.Pointer(ret.ref)
 }
 
@@ -343,7 +360,8 @@ func (ctx *Context) NewNativeObject(obj interface{}) *Object {
 }
 
 //export nativeobject_GetProperty_go
-func nativeobject_GetProperty_go(data_ptr, ctx, _, propertyName unsafe.Pointer, exception *unsafe.Pointer) unsafe.Pointer {
+func nativeobject_GetProperty_go(data_ptr, uctx, _, propertyName unsafe.Pointer, exception *unsafe.Pointer) unsafe.Pointer {
+	ctx := newContext(C.JSContextRef(uctx))
 	// Get name of property as a go string
 	name := (*String)(propertyName).String()
 
@@ -363,14 +381,14 @@ func nativeobject_GetProperty_go(data_ptr, ctx, _, propertyName unsafe.Pointer, 
 	// Can we locate a field with the proper name?
 	field := struct_val.FieldByName(name)
 	if field.IsValid() {
-		return unsafe.Pointer((*Context)(ctx).reflectToJSValue(field).ref)
+		return unsafe.Pointer(ctx.reflectToJSValue(field).ref)
 	}
 
 	// Can we locate a method with the proper name?
 	typ := data.typ
 	for lp := 0; lp < typ.NumMethod(); lp++ {
 		if typ.Method(lp).Name == name {
-			ret := newNativeMethod((*Context)(ctx), data, lp)
+			ret := newNativeMethod(ctx, data, lp)
 			return unsafe.Pointer(ret.ref)
 		}
 	}
@@ -397,7 +415,8 @@ func internal_go_error(ctx *Context) *Exception {
 }
 
 //export nativeobject_SetProperty_go
-func nativeobject_SetProperty_go(data_ptr, ctx, _, propertyName, value unsafe.Pointer, exception *unsafe.Pointer) C.char {
+func nativeobject_SetProperty_go(data_ptr, uctx, _, propertyName, value unsafe.Pointer, exception *unsafe.Pointer) C.char {
+	ctx := newContext(C.JSContextRef(uctx))
 	// Get name of property as a go string
 	name := (*String)(propertyName).String()
 
@@ -411,7 +430,7 @@ func nativeobject_SetProperty_go(data_ptr, ctx, _, propertyName, value unsafe.Po
 	}
 	struct_val := val
 	if struct_val.Kind() != reflect.Struct {
-		*exception = unsafe.Pointer(internal_go_error((*Context)(ctx)).val.ref)
+		*exception = unsafe.Pointer(internal_go_error(ctx).val.ref)
 		return 1
 	}
 
@@ -420,7 +439,7 @@ func nativeobject_SetProperty_go(data_ptr, ctx, _, propertyName, value unsafe.Po
 		return 0
 	}
 
-	javascript_to_value(field, (*Context)(ctx), (*Value)(value), exception)
+	javascript_to_value(field, ctx, ctx.reflectToJSValue(val), exception)
 	return 1
 }
 
@@ -455,10 +474,11 @@ func newNativeMethod(ctx *Context, obj *object_data, method int) *Object {
 }
 
 //export nativemethod_CallAsFunction_go
-func nativemethod_CallAsFunction_go(data_ptr, ctx, obj, thisObject unsafe.Pointer, argumentCount uint, arguments unsafe.Pointer, exception *unsafe.Pointer) unsafe.Pointer {
+func nativemethod_CallAsFunction_go(data_ptr unsafe.Pointer, uctx unsafe.Pointer, obj unsafe.Pointer, thisObject unsafe.Pointer, argumentCount uint, arguments unsafe.Pointer, exception *unsafe.Pointer) unsafe.Pointer {
+	ctx := newContext(C.JSContextRef(uctx))
 	defer func() {
 		if r := recover(); r != nil {
-			*exception = unsafe.Pointer(recover_to_javascript((*Context)(ctx), r))
+			*exception = unsafe.Pointer(recover_to_javascript(ctx, r))
 		}
 	}()
 
@@ -474,6 +494,6 @@ func nativemethod_CallAsFunction_go(data_ptr, ctx, obj, thisObject unsafe.Pointe
 	}
 
 	// Perform the call
-	ret := docall((*Context)(ctx), method, argumentCount, arguments)
+	ret := docall(ctx, method, argumentCount, arguments)
 	return unsafe.Pointer(ret.ref)
 }

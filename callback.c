@@ -20,7 +20,7 @@ static JSValueRef nativecallback_CallAsFunction(JSContextRef ctx, JSObjectRef fu
 
 	// Routine must set private to callback point in Go
 	void* data = JSObjectGetPrivate( function );
-	JSValueRef ret = nativecallback_CallAsFunction_go( data, (void*)ctx, (void*)function, (void*)thisObject, argumentCount, (void*)arguments, (void**)exception );
+	JSValueRef ret = nativecallback_CallAsFunction_go( data, ctx, function, thisObject, argumentCount, arguments, (void**)exception );
 	assert( *exception==NULL || (*exception && !ret) );
 	return ret;
 }
@@ -78,7 +78,7 @@ static JSValueRef nativefunction_CallAsFunction(JSContextRef ctx, JSObjectRef fu
 
 	// Routine must set private to callback point in Go
 	void* data = JSObjectGetPrivate( function );
-	JSValueRef ret = nativefunction_CallAsFunction_go( data, (void*)ctx, (void*)function, (void*)thisObject, argumentCount, (void*)arguments, (void**)exception );
+	JSValueRef ret = nativefunction_CallAsFunction_go(data, ctx, function, thisObject, argumentCount, (void*)arguments, exception );
 	assert( *exception==NULL || (*exception && !ret) );
 	return ret;
 }
@@ -207,7 +207,7 @@ static JSValueRef nativemethod_CallAsFunction(JSContextRef ctx, JSObjectRef func
 
 	// Routine must set private to callback point in Go
 	void* data = JSObjectGetPrivate( function );
-	JSValueRef ret = nativemethod_CallAsFunction_go( data, (void*)ctx, (void*)function, (void*)thisObject, argumentCount, (void*)arguments, (void**)exception );
+	JSValueRef ret = nativemethod_CallAsFunction_go( data, ctx, function, thisObject, argumentCount, (void*)arguments, exception );
 	assert( *exception==NULL || (*exception && !ret) );
 	return ret;
 }
