@@ -1,7 +1,9 @@
 package gojs
 
 import (
+	"github.com/bmizerany/assert"
 	"testing"
+	"unsafe"
 	"log"
 	"os"
 )
@@ -31,6 +33,65 @@ func (o *reflect_object) Self() *reflect_object {
 
 func (o *reflect_object) Null() *reflect_object {
 	return nil
+}
+
+func PrettyPrintValArr(t *testing.T, values []*Value) {
+	for _, val := range values {
+		tlog(t, val)
+	}
+}
+
+func ValArrToStrings(t *testing.T, values []*Value) {
+	for _, val := range values {
+		tlog(t, val.ctx.ToStringOrDie(val))
+	}
+}
+
+func TestNewCValueArray(t *testing.T) {
+	ctx := NewContext()
+	defer ctx.Release()
+	
+	valarr := make([]*Value, 5)
+	valarr[0] = ctx.NewValue(0)
+	valarr[1] = ctx.NewNumberValue(1.3)
+	valarr[2] = ctx.NewValue(nil)
+	valarr[3] = ctx.NewValue(2309240)
+	valarr[4] = ctx.NewValue(0x934)
+	
+	cptr, size := ctx.newCValueArray(valarr)
+	
+	// Make sure the C array is correct
+	uptr := uintptr(unsafe.Pointer(cptr))
+	ptr0 := unsafe.Pointer(uptr+0)
+	val0 := ctx.ptrToValue(ptr0)
+	ptr1 := unsafe.Pointer(uptr+4)
+	val1 := ctx.ptrToValue(ptr1)
+	ptr2 := unsafe.Pointer(uptr+8)
+	val2 := ctx.ptrToValue(ptr2)
+	ptr3 := unsafe.Pointer(uptr+12)
+	val3 := ctx.ptrToValue(ptr3)
+	ptr4 := unsafe.Pointer(uptr+16)
+	val4 := ctx.ptrToValue(ptr4)
+	
+	tlog(t, ctx.ToStringOrDie(val0))
+	tlog(t, ctx.ToStringOrDie(val1))
+	tlog(t, ctx.ToStringOrDie(val2))
+	tlog(t, ctx.ToStringOrDie(val3))
+	tlog(t, ctx.ToStringOrDie(val4))
+	
+	origarray := ctx.newGoValueArray(unsafe.Pointer(cptr), uint(size))
+	
+	assert.Equal(t, valarr, origarray)
+	PrettyPrintValArr(t, valarr)
+	PrettyPrintValArr(t, origarray)
+	
+	ValArrToStrings(t, valarr)
+	ValArrToStrings(t, origarray)
+// 	tlog(t, ctx.ToStringOrDie(origarray[0]))
+// 	tlog(t, ctx.ToStringOrDie(origarray[1]))
+// 	tlog(t, ctx.ToStringOrDie(origarray[2]))
+// 	tlog(t, ctx.ToStringOrDie(origarray[3]))
+// 	tlog(t, ctx.ToStringOrDie(origarray[4]))
 }
 
 func TestNewFunctionWithCallback(t *testing.T) {
@@ -104,7 +165,7 @@ func TestNewFunctionWithCallback2(t *testing.T) {
 		tlog(t, args[0].ref, args[1].ref)
 		//a, err := args[0].ctx.ToNumber(args[0])
 		//tlog(t, a, err)
-		return ctx.NewNumberValue(2)
+		//return ctx.NewNumberValue(2)
 		a, err := ctx.ToNumber(args[0])
 		tlog(t, err)
 		tlog(t, "Converted first arg...")
@@ -229,7 +290,7 @@ func TestNativeFunction2(t *testing.T) {
 	args[1] = ctx.NewNumberValue(3.0)
 	val, err := ctx.CallAsFunction(fn, nil, args)
 	tlog(t, "Called as function")
-	if val == nil || err.val != nil {
+	if (err != nil && err.val != nil) || val == nil {
 		t.Errorf("Error executing native function (%v)", err)
 	}
 	if ctx.ToNumberOrDie(val) != 4.5 {
@@ -257,7 +318,7 @@ func TestNativeFunction3(t *testing.T) {
 	a := ctx.NewNumberValue(1.5)
 	b := ctx.NewNumberValue(3.0)
 	val, err := ctx.CallAsFunction(fn, nil, []*Value{a, b})
-	if err.val != nil || val == nil {
+	if (err != nil && err.val != nil) || val == nil {
 		t.Errorf("Error executing native function (%v)", ctx.ToStringOrDie(err.val))
 	}
 	if ctx.ToNumberOrDie(val) != 4.5 {
@@ -283,9 +344,12 @@ func TestNativeFunctionPanic(t *testing.T) {
 			t.Errorf("ctx.NewFunctionWithNative returned value that is not a function")
 		}
 		val, err := ctx.CallAsFunction(fn, nil, nil)
-		if err.val == nil || val != nil {
-			t.Errorf("ctx.CallAsFunction did not panic as expected")
+		tlog(t, "Called as function")
+		tlog(t, val, err)
+		if err == nil || val != nil {
+			t.Fatalf("ctx.CallAsFunction did not panic as expected")
 		}
+		tlog(t, "About to convert to string!")
 		msg := ctx.ToStringOrDie(err.val)
 		if msg[0:7] != "Error: " {
 			t.Errorf("ctx.CallAsFunction did return expected error object (%v)", msg)

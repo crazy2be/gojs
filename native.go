@@ -69,13 +69,17 @@ func (ctx *Context) newCValueArray(val []*Value) (*C.JSValueRef, C.size_t) {
 	return &arr[0], C.size_t(len(arr))
 }
 
+func (ctx *Context) ptrToValue(ptr unsafe.Pointer) *Value {
+	return ctx.newValue(*(*C.JSValueRef)(ptr))
+}
+
 func (ctx *Context) newGoValueArray(ptr unsafe.Pointer, size uint) ([]*Value) {
 	if uintptr(ptr) == 0x00000000 {
 		return nil
 	}
 	goarr := make([]*Value, size)
 	for i := uint(0); i < size; i++ {
-		goarr[i] = ctx.newValue(C.JSValueRef(ptr))
+		goarr[i] = ctx.newValue(*(*C.JSValueRef)(ptr))
 		ptr = unsafe.Pointer(4+uintptr(ptr))
 	}
 	return goarr
