@@ -2,6 +2,7 @@ package gojs
 
 import (
 	"testing"
+	"log"
 	"os"
 )
 
@@ -59,23 +60,42 @@ func TestNewFunctionWithCallback(t *testing.T) {
 	}
 }
 
+// t.Log doesn't print things immediately, this does if TESTING_DEBUG_LOG is set to true. Useful when you have pointer crashes and faults such as are common with cgo code.
+const TESTING_DEBUG_LOG = true
+
+func tlog(t *testing.T, v ...interface{}) {
+	if TESTING_DEBUG_LOG {
+		log.Println(v...)
+	} else {
+		t.Log(v...)
+	}
+	return
+}
+
 func TestNewFunctionWithCallback2(t *testing.T) {
 	callback := func(ctx *Context, obj *Object, thisObject *Object, args []*Value) *Value {
+		tlog(t, "In callback function!")
 		if len(args) != 2 {
 			return nil
 		}
-
-		a := ctx.ToNumberOrDie(args[0])
+		tlog(t, "Attempting to convert args to numbers...", args)
+		a, err := ctx.ToNumber(args[0])
+		tlog(t, err)
+		tlog(t, "Converted first arg...")
 		b := ctx.ToNumberOrDie(args[1])
 		return ctx.NewNumberValue(a + b)
 	}
 
+	tlog(t, "Acquiring context!")
 	ctx := NewContext()
 	defer ctx.Release()
 
+	tlog(t, "Creating a new function with callback")
 	fn := ctx.NewFunctionWithCallback(callback)
+	tlog(t, "Ceating new number values")
 	a := ctx.NewNumberValue(1.5)
 	b := ctx.NewNumberValue(3.0)
+	tlog(t, "Calling callback as function")
 	val, err := ctx.CallAsFunction(fn, nil, []*Value{a, b})
 	if err != nil || val == nil {
 		t.Errorf("Error executing native callback")

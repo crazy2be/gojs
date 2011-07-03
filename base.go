@@ -14,7 +14,7 @@ type ContextGroup struct {
 }
 
 type Context struct {
-
+	ref C.JSContextRef
 }
 
 type GlobalContext Context
@@ -31,7 +31,7 @@ func (ctx *Context) EvaluateScript(script string, obj *Object, source_url string
 
 	var exception C.JSValueRef
 
-	ret := C.JSEvaluateScript(C.JSContextRef(unsafe.Pointer(ctx)),
+	ret := C.JSEvaluateScript(ctx.ref,
 		C.JSStringRef(unsafe.Pointer(scriptRef)), C.JSObjectRef(unsafe.Pointer(obj)),
 		C.JSStringRef(unsafe.Pointer(sourceRef)), C.int(startingLineNumber), &exception)
 	if ret == nil {
@@ -56,7 +56,7 @@ func (ctx *Context) CheckScriptSyntax(script string, source_url string, starting
 
 	var exception C.JSValueRef
 
-	ret := C.JSCheckScriptSyntax(C.JSContextRef(unsafe.Pointer(ctx)),
+	ret := C.JSCheckScriptSyntax(ctx.ref,
 		C.JSStringRef(unsafe.Pointer(scriptRef)), C.JSStringRef(unsafe.Pointer(sourceRef)),
 		C.int(startingLineNumber), &exception)
 	if !ret {
@@ -70,5 +70,5 @@ func (ctx *Context) CheckScriptSyntax(script string, source_url string, starting
 }
 
 func (ctx *Context) GarbageCollect() {
-	C.JSGarbageCollect(C.JSContextRef(unsafe.Pointer(ctx)))
+	C.JSGarbageCollect(ctx.ref)
 }
