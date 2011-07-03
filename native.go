@@ -70,6 +70,9 @@ func (ctx *Context) newCValueArray(val []*Value) (*C.JSValueRef, C.size_t) {
 }
 
 func (ctx *Context) newGoValueArray(ptr unsafe.Pointer, size uint) ([]*Value) {
+	if uintptr(ptr) == 0x00000000 {
+		return nil
+	}
 	goarr := make([]*Value, size)
 	for i := uint(0); i < size; i++ {
 		goarr[i] = ctx.newValue(C.JSValueRef(ptr))
@@ -157,6 +160,7 @@ func (ctx *Context) jsValuesToReflect(param []*Value) []reflect.Value {
 
 	for index, item := range param {
 		var goval interface{}
+		log.Println(index, item)
 
 		switch ctx.ValueType(item) {
 		case TypeBoolean:
@@ -303,9 +307,15 @@ func docall(ctx *Context, val reflect.Value, argumentCount uint, arguments unsaf
 	// an array of reflect.Values.  
 	var in []reflect.Value
 	if argumentCount != 0 {
-		// wtf????
-		in = ctx.jsValuesToReflect((*[1 << 14]*Value)(arguments)[0:argumentCount])
+		valarr := ctx.newGoValueArray(arguments, argumentCount)
+		log.Println("Converted pointer to go-style array", valarr)
+		log.Println("Converting to relfect.Value s")
+		in = ctx.jsValuesToReflect(valarr)
 	}
+
+	log.Println("Converted arguments to native go reflect types. About to actually call the callback function...")
+	
+	log.Println(in)
 
 	// Step two, perform the call
 	out := val.Call(in)
@@ -323,7 +333,7 @@ func nativefunction_CallAsFunction_go(data_ptr unsafe.Pointer, uctx unsafe.Point
 	ctx := newContext(C.JSContextRef(uctx))
 	defer func() {
 		if r := recover(); r != nil {
-			*exception = unsafe.Pointer(recover_to_javascript(ctx, r))
+			*exception = unsafe.Pointer(recover_to_javascript(ctx, r).ref)
 		}
 	}()
 
@@ -337,7 +347,12 @@ func nativefunction_CallAsFunction_go(data_ptr unsafe.Pointer, uctx unsafe.Point
 		panic("Incorrect number of function arguments")
 	}
 
+	log.Println("About to docall()!")
+	
 	ret := docall(ctx, val, argumentCount, arguments)
+	if ret == nil {
+		return nil
+	}
 	return unsafe.Pointer(ret.ref)
 }
 

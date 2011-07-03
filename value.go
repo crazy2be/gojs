@@ -28,7 +28,8 @@ func (ctx *Context) ValueType(v *Value) uint8 {
 	fmt.Printf("%#v %#v\n", ctx.ref, v.ctx.ref)
 	fmt.Printf("%#v\n", v.ref)
 	fmt.Printf("%d\n", (*v.ref))
-	ret := C.JSValueGetType(v.ctx.ref, v.ref)
+	fmt.Printf("%#v\n", uintptr(unsafe.Pointer(v.ref)))
+	ret := C.JSValueGetType(ctx.ref, v.ref)
 	return uint8(ret)
 }
 
