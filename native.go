@@ -77,10 +77,12 @@ func (ctx *Context) newGoValueArray(ptr unsafe.Pointer, size uint) ([]*Value) {
 	if uintptr(ptr) == 0x00000000 {
 		return nil
 	}
+	ptrs := unsafe.Sizeof(uintptr(0))
 	goarr := make([]*Value, size)
 	for i := uint(0); i < size; i++ {
-		goarr[i] = ctx.newValue(*(*C.JSValueRef)(ptr))
-		ptr = unsafe.Pointer(unsafe.Sizeof(uintptr(0))+uintptr(ptr))
+		goarr[i] = ctx.ptrToValue(ptr)
+		// Increment the pointer by one space
+		ptr = unsafe.Pointer(uintptr(ptr)+ptrs)
 	}
 	return goarr
 }
