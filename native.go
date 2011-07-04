@@ -80,7 +80,7 @@ func (ctx *Context) newGoValueArray(ptr unsafe.Pointer, size uint) ([]*Value) {
 	goarr := make([]*Value, size)
 	for i := uint(0); i < size; i++ {
 		goarr[i] = ctx.newValue(*(*C.JSValueRef)(ptr))
-		ptr = unsafe.Pointer(4+uintptr(ptr))
+		ptr = unsafe.Pointer(unsafe.Sizeof(uintptr(0))+uintptr(ptr))
 	}
 	return goarr
 }

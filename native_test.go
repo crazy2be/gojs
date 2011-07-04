@@ -61,16 +61,17 @@ func TestNewCValueArray(t *testing.T) {
 	cptr, size := ctx.newCValueArray(valarr)
 	
 	// Make sure the C array is correct
+	ptrs := unsafe.Sizeof(uintptr(0))
 	uptr := uintptr(unsafe.Pointer(cptr))
 	ptr0 := unsafe.Pointer(uptr+0)
 	val0 := ctx.ptrToValue(ptr0)
-	ptr1 := unsafe.Pointer(uptr+4)
+	ptr1 := unsafe.Pointer(uptr+(ptrs*1))
 	val1 := ctx.ptrToValue(ptr1)
-	ptr2 := unsafe.Pointer(uptr+8)
+	ptr2 := unsafe.Pointer(uptr+(ptrs*2))
 	val2 := ctx.ptrToValue(ptr2)
-	ptr3 := unsafe.Pointer(uptr+12)
+	ptr3 := unsafe.Pointer(uptr+(ptrs*3))
 	val3 := ctx.ptrToValue(ptr3)
-	ptr4 := unsafe.Pointer(uptr+16)
+	ptr4 := unsafe.Pointer(uptr+(ptrs*4))
 	val4 := ctx.ptrToValue(ptr4)
 	
 	tlog(t, ctx.ToStringOrDie(val0))
