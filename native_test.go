@@ -46,16 +46,39 @@ func ValArrToStrings(t *testing.T, values []*Value) {
 	}
 }
 
+func checkExpected(t *testing.T, val *Value, str string) {
+	str2 := val.ctx.ToStringOrDie(val)
+	if str2 != str {
+		t.Fatalf("Got %s, expected %s", str2, str)
+	}
+}
+
+func checkArrsEqual(t *testing.T, vals []*Value, expectedVals []*Value) {
+	for i, _ := range vals {
+		valstr := vals[i].ctx.ToStringOrDie(vals[i])
+		expvalstr := expectedVals[i].ctx.ToStringOrDie(expectedVals[i])
+		if valstr != expvalstr {
+			t.Fatalf("Got %s, expected %s", valstr, expvalstr)
+		}
+	}
+}
+
 func TestNewCValueArray(t *testing.T) {
 	ctx := NewContext()
 	defer ctx.Release()
 	
 	valarr := make([]*Value, 5)
+	valstrs := make([]string, 5)
 	valarr[0] = ctx.NewValue(0)
+	valstrs[0] = "0"
 	valarr[1] = ctx.NewNumberValue(1.3)
+	valstrs[1] = "1.3"
 	valarr[2] = ctx.NewValue(nil)
+	valstrs[2] = "null"
 	valarr[3] = ctx.NewValue(2309240)
+	valstrs[3] = "2309240"
 	valarr[4] = ctx.NewValue(0x934)
+	valstrs[4] = "2356"
 	
 	cptr, size := ctx.newCValueArray(valarr)
 	
@@ -73,26 +96,15 @@ func TestNewCValueArray(t *testing.T) {
 	ptr4 := unsafe.Pointer(uptr+(ptrs*4))
 	val4 := ctx.ptrToValue(ptr4)
 	
-	tlog(t, ctx.ToStringOrDie(val0))
-	tlog(t, ctx.ToStringOrDie(val1))
-	tlog(t, ctx.ToStringOrDie(val2))
-	tlog(t, ctx.ToStringOrDie(val3))
-	tlog(t, ctx.ToStringOrDie(val4))
+	checkExpected(t, val0, valstrs[0])
+	checkExpected(t, val1, valstrs[1])
+	checkExpected(t, val2, valstrs[2])
+	checkExpected(t, val3, valstrs[3])
+	checkExpected(t, val4, valstrs[4])
 	
 	origarray := ctx.newGoValueArray(unsafe.Pointer(cptr), uint(size))
 	
-	//assert.Equal(t, valarr, origarray)
-	
-	PrettyPrintValArr(t, valarr)
-	PrettyPrintValArr(t, origarray)
-	
-	ValArrToStrings(t, valarr)
-	ValArrToStrings(t, origarray)
-// 	tlog(t, ctx.ToStringOrDie(origarray[0]))
-// 	tlog(t, ctx.ToStringOrDie(origarray[1]))
-// 	tlog(t, ctx.ToStringOrDie(origarray[2]))
-// 	tlog(t, ctx.ToStringOrDie(origarray[3]))
-// 	tlog(t, ctx.ToStringOrDie(origarray[4]))
+	checkArrsEqual(t, valarr, origarray)
 }
 
 func TestNewFunctionWithCallback(t *testing.T) {
