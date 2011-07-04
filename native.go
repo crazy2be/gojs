@@ -117,6 +117,9 @@ func (ctx *Context) reflectToJSValue(value reflect.Value) *Value {
 	case (reflect.Func):
 		r := value.Interface()
 		return ctx.NewFunctionWithNative(r).ToValue()
+	//case (reflect.Struct):
+	//	r := value.Interface()
+	//	return ctx.NewNativeObject(r).ToValue()
 	case (reflect.Ptr):
 		if value.IsNil() {
 			return ctx.NewNullValue()
@@ -458,7 +461,7 @@ func nativeobject_SetProperty_go(data_ptr, uctx, _, propertyName, value unsafe.P
 		return 0
 	}
 
-	javascript_to_value(field, ctx, ctx.reflectToJSValue(val), exception)
+	javascript_to_value(field, ctx, ctx.newValue(C.JSValueRef(value)), exception)
 	return 1
 }
 

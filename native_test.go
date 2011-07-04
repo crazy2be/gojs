@@ -416,34 +416,48 @@ func TestNewNativeObjectSet(t *testing.T) {
 	ctx := NewContext()
 	defer ctx.Release()
 
+	tlog(t, "Creating new native object from", obj)
+	
 	v := ctx.NewNativeObject(obj)
+	
+	tlog(t, "Setting property n")
+	
 	ctx.SetProperty(ctx.GlobalObject(), "n", v.ToValue(), 0)
-
+	
+	tlog(t, "Creating value for property I")
+	
 	// Set the integer property
 	i := ctx.NewNumberValue(-2)
+	tlog(t, "Setting property I", i)
+	tlog(t, ctx.ToStringOrDie(i))
 	ctx.SetProperty(v, "I", i, 0)
+	tlog(t, "Set property I, checking for errors.")
 	if obj.I != -2 {
 		t.Errorf("ctx.SetProperty did not set integer field correctly")
 	}
+	
+	tlog(t, "Setting property U")
 
 	// Set the unsigned integer property
 	u := ctx.NewNumberValue(3)
 	ctx.SetProperty(v, "U", u, 0)
 	if obj.U != 3 {
-		t.Errorf("ctx.SetProperty did not set unsigned integer field correctly")
+		t.Fatalf("ctx.SetProperty did not set unsigned integer field correctly")
 	}
+	
+	t.Error("Skipping setting property U to invalid value, it currently causes a fault.")
 
 	// Set the unsigned integer property
-	u = ctx.NewNumberValue(-3)
-	err := ctx.SetProperty(v, "U", u, 0)
-	if err == nil {
-		t.Errorf("ctx.SetProperty did not set unsigned integer field correctly")
-	} else {
-		t.Logf("%v", err)
-	}
-	if obj.U != 3 {
-		t.Errorf("ctx.SetProperty did not set unsigned integer field correctly")
-	}
+// 	u = ctx.NewNumberValue(-3)
+// 	err := ctx.SetProperty(v, "U", u, 0)
+// 	if err == nil {
+// 		t.Errorf("ctx.SetProperty did not set unsigned integer field correctly")
+// 	} else {
+// 		t.Logf("%v", err)
+// 	}
+// 	if obj.U != 3 {
+// 		t.Errorf("ctx.SetProperty did not set unsigned integer field correctly")
+// 	}
 
 	// Set the float property
 	n := ctx.NewNumberValue(4.0)
@@ -481,23 +495,32 @@ func TestNewNativeObjectMethod(t *testing.T) {
 	v := ctx.NewNativeObject(obj)
 	ctx.SetProperty(ctx.GlobalObject(), "n", v.ToValue(), 0)
 
+	tlog(t, "Testing n.Add()")
+	
 	// Following script access should be successful
 	ret, err := ctx.EvaluateScript("n.Add()", nil, "./testing.go", 1)
+	
+	tlog(t, "Evaluated Script")
 	if err != nil {
 		t.Errorf("ctx.EvaluateScript returned an error: %#v", *err)
 		return
 	}
+	tlog(t, "No error")
 	if ret == nil {
 		t.Errorf("ctx.EvaluateScript did not return a result! (no error)")
 		return
 	}
+	tlog(t, "Result was returned")
 	if !ctx.IsNumber(ret) {
 		t.Errorf("ctx.EvaluateScript did not return 'number' result when calling method 'Add'.")
 	}
+	tlog(t, "sucessfully checked that value was a number")
 	num := ctx.ToNumberOrDie(ret)
 	if num != 2.0 {
 		t.Errorf("ctx.EvaluateScript incorrect value when accessing native object's field.")
 	}
+	
+	tlog(t, "Testing n.AddWith()")
 
 	// Following script access should be successful
 	ret, err = ctx.EvaluateScript("n.AddWith(0.5)", nil, "./testing.go", 1)

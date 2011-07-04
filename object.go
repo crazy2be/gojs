@@ -208,7 +208,7 @@ func (ctx *Context) SetProperty(obj *Object, name string, rhs *Value, attributes
 
 	C.JSObjectSetProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), rhs.ref,
 		(C.JSPropertyAttributes)(attributes), &exception.val.ref)
-	if exception != nil {
+	if exception.val != nil {
 		return exception
 	}
 
