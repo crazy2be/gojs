@@ -5,10 +5,13 @@ package gojs
 // #include <JavaScriptCore/JSObjectRef.h>
 // #include "callback.h"
 import "C"
-import "os"
-import "reflect"
-import "unsafe"
-import "log"
+import (
+	"os"
+	"reflect"
+	"unsafe"
+	"log"
+	"fmt"
+)
 
 type object_data struct {
 	typ    reflect.Type
@@ -513,8 +516,8 @@ func nativemethod_CallAsFunction_go(data_ptr unsafe.Pointer, uctx unsafe.Pointer
 	method := data.val.Method(data.method)
 
 	// Do the number of input parameters match?
-	if method.Type().NumIn() != int(argumentCount)+1 {
-		panic("Incorrect number of function arguments")
+	if method.Type().NumIn() != int(argumentCount) {
+		panic(fmt.Sprintf("Incorrect number of function arguments! Got %d, expected %d!", method.Type().NumIn(), int(argumentCount)))
 	}
 
 	// Perform the call

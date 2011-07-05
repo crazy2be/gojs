@@ -240,11 +240,13 @@ func (ctx *Context) DeleteProperty(obj *Object, name string) (bool, *Exception) 
 	return bool(ret), nil
 }
 
+// Should NOT be public. WTF.
 func (obj *Object) GetPrivate() unsafe.Pointer {
 	ret := C.JSObjectGetPrivate(obj.ref)
 	return ret
 }
 
+// Should NOT be public. WTF.
 func (obj *Object) SetPrivate(data unsafe.Pointer) bool {
 	ret := C.JSObjectSetPrivate(obj.ref, data)
 	return bool(ret)
@@ -257,10 +259,9 @@ func (obj *Object) ToValue() *Value {
 	if obj == nil {
 		panic("ToValue() called on nil *Object!")
 	}
-	//if obj == nil {
-	//	return nil
-	//}
-	return obj.ctx.newValue(C.JSValueRef(obj.ref))
+	val := obj.ctx.newValue(C.JSValueRef(obj.ref))
+	log.Println("Converted to value!", val)
+	return val
 }
 
 func (ctx *Context) IsFunction(obj *Object) bool {

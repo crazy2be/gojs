@@ -3,7 +3,10 @@ package gojs
 // #include <stdlib.h>
 // #include <JavaScriptCore/JSBase.h>
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+	"log"
+)
 
 //=========================================================
 // ContextRef
@@ -35,6 +38,8 @@ func (ctx *Context) EvaluateScript(script string, obj *Object, source_url string
 
 	exception := ctx.NewException()
 
+	log.Println("About to evaluate script:", script, obj, source_url, startingLineNumber)
+	
 	ret := C.JSEvaluateScript(ctx.ref,
 		C.JSStringRef(unsafe.Pointer(scriptRef)), obj.ref,
 		C.JSStringRef(unsafe.Pointer(sourceRef)), C.int(startingLineNumber), &exception.val.ref)

@@ -21,6 +21,14 @@ const (
 	TypeObject    = iota
 )
 
+func (val *Value) String() string {
+	str, errVal := val.ctx.ToString(val)
+	if errVal != nil {
+		return "Error:" + errVal.String()
+	}
+	return str
+}
+
 func (ctx *Context) ValueType(v *Value) uint8 {
 	fmt.Println(ctx, v)
 	fmt.Printf("%#v %#v\n", ctx, v.ctx)
