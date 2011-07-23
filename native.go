@@ -147,24 +147,22 @@ func (ctx *Context) reflectToJSValue(value reflect.Value) *Value {
 }
 
 func recover_to_javascript(ctx *Context, r interface{}) *Value {
-	if re, ok := r.(os.Error); ok {
-		// TODO:  Check for error return from NewError
-		ret, _ := ctx.NewError(re.String())
-		return ret.ToValue()
-	}
+// I don't think this os.Error check is necessary, since os.Error == Stringer.
+// 	if re, ok := r.(os.Error); ok {
+// 		// TODO:  Check for error return from NewError
+// 		ret, _ := ctx.NewError(re.String())
+// 		return ret.ToValue()
+// 	}
 	if str, ok := r.(Stringer); ok {
-		ret, _ := ctx.NewError(str.String())
-		return ret.ToValue()
+		return ctx.NewGoError(str.String())
 	}
 	if str := reflect.ValueOf(r); str.Kind() == reflect.String {
-		ret, _ := ctx.NewError(str.String())
-		return ret.ToValue()
+		return ctx.NewGoError(str.String())
 	}
 
 	// Don't know how to convert this panic into a JavaScript error.
 	// TODO:  Check for error return from NewError
-	ret, _ := ctx.NewError("Unknown panic from within Go.")
-	return ret.ToValue()
+	return ctx.NewGoError("Unknown panic from within Go.")
 }
 
 func (ctx *Context) jsValuesToReflect(param []*Value) []reflect.Value {
@@ -191,14 +189,14 @@ func (ctx *Context) jsValuesToReflect(param []*Value) []reflect.Value {
 	return ret
 }
 
-func javascript_to_value(field reflect.Value, ctx *Context, value *Value, exception *unsafe.Pointer) {
+func javascript_to_value(field reflect.Value, ctx *Context, value *Value) (err *Value) {
 	switch field.Kind() {
 	case reflect.String:
 		str, err := ctx.ToString(value)
 		if err == nil {
 			field.SetString(str)
 		} else {
-			*exception = unsafe.Pointer(err)
+			return
 		}
 
 	case reflect.Float32, reflect.Float64:
@@ -206,7 +204,7 @@ func javascript_to_value(field reflect.Value, ctx *Context, value *Value, except
 		if err == nil {
 			field.SetFloat(flt)
 		} else {
-			*exception = unsafe.Pointer(err)
+			return
 		}
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -214,29 +212,28 @@ func javascript_to_value(field reflect.Value, ctx *Context, value *Value, except
 		if err == nil {
 			field.SetInt(int64(flt))
 		} else {
-			*exception = unsafe.Pointer(err)
+			return
 		}
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		flt, err := ctx.ToNumber(value)
-		if err == nil {
-			if flt >= 0 {
-				field.SetUint(uint64(flt))
-			} else {
-				err1, err := ctx.NewError("Number must be greater than or equal to zero.")
-				if err == nil {
-					*exception = unsafe.Pointer(err1)
-				} else {
-					*exception = unsafe.Pointer(err)
-				}
-			}
+		log.Println("Dealing with uint type of some sort...")
+		var flt float64
+		flt, err = ctx.ToNumber(value)
+		log.Println("Got value!")
+		if err != nil {
+			return
+		}
+		if flt >= 0 {
+			field.SetUint(uint64(flt))
 		} else {
-			*exception = unsafe.Pointer(err)
+			err = ctx.NewGoError("Number must be greater than or equal to zero.")
+			return
 		}
 
 	default:
 		panic("Parameter can not be converted to Go native type.")
 	}
+	return
 }
 
 //=========================================================
@@ -466,7 +463,12 @@ func nativeobject_SetProperty_go(data_ptr, uctx, _, propertyName, value unsafe.P
 		return 0
 	}
 
-	javascript_to_value(field, ctx, ctx.newValue(C.JSValueRef(value)), exception)
+	err := javascript_to_value(field, ctx, ctx.newValue(C.JSValueRef(value)))
+	log.Println("Called javascript_to_value()")
+	if err != nil {
+		*exception = unsafe.Pointer(err.ref)
+	}
+	log.Println("Set exception pointer")
 	return 1
 }
 

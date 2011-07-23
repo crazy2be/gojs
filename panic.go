@@ -6,9 +6,19 @@ package gojs
 // #include <JavaScriptCore/JSValueRef.h>
 // #include "callback.h"
 import "C"
-import "os"
-import "fmt"
-import "unsafe"
+import (
+	"os"
+	"fmt"
+	"log"
+	"unsafe"
+)
+
+// NewGoError represents an error that happened within go, perhaps a panic in a callback function or some such. It is used to report these errors *to* javascript.
+func (ctx *Context) NewGoError(desc string) (*Value) {
+	log.Println("Go error:", desc)
+	val := ctx.NewStringValue(desc)
+	return val
+}
 
 type Error struct {
 	Name    string

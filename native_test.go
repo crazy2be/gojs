@@ -458,19 +458,21 @@ func TestNewNativeObjectSet(t *testing.T) {
 		t.Fatalf("ctx.SetProperty did not set unsigned integer field correctly")
 	}
 	
-	t.Error("Skipping setting property U to invalid value, it currently causes a fault.")
+// 	t.Error("Skipping setting property U to invalid value, it currently causes a fault.")
 
 	// Set the unsigned integer property
-// 	u = ctx.NewNumberValue(-3)
-// 	err := ctx.SetProperty(v, "U", u, 0)
-// 	if err == nil {
-// 		t.Errorf("ctx.SetProperty did not set unsigned integer field correctly")
-// 	} else {
-// 		t.Logf("%v", err)
-// 	}
-// 	if obj.U != 3 {
-// 		t.Errorf("ctx.SetProperty did not set unsigned integer field correctly")
-// 	}
+	u = ctx.NewNumberValue(-3)
+	tlog(t, "Setting property U to invalid value")
+	err := ctx.SetProperty(v, "U", u, 0)
+	tlog(t, "Set property, checking for correctness...")
+	if err == nil {
+		t.Errorf("ctx.SetProperty did not set unsigned integer field correctly: No error was returned")
+	} else {
+		t.Logf("%v", err)
+	}
+	if obj.U != 3 {
+		t.Errorf("ctx.SetProperty did not set unsigned integer field correctly: Incorrect value")
+	}
 
 	// Set the float property
 	n := ctx.NewNumberValue(4.0)
