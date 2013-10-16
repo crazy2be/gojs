@@ -5,19 +5,16 @@ Highly experiemental, I'm not even sure these work currently. Original author is
 
 Update (2013/10/16): The test suite does not work at all, but it compiles again with go 1.0. Feel free to hack away at this if you think it might be useful :).
 
-Use
----
-
-Install:
+### Install:
 
 	git clone git@github.com:crazy2be/gojs.git
 	go install gojs
 
-Import:
+### Import:
 
 	import "gojs"
 
-Use:
+### Use:
 
 	package main
 
@@ -47,6 +44,14 @@ Use:
 		fmt.Println(retstr)
 	}
 
+TODOs
+-----
+(for anyone interested)
+
+1. Get the test suite to pass ;)
+2. Move as many functions as possible *off* of context. We should be able to make a nicely broken-down API where the conceptual weight is lower. For example, all of the functions that take `obj *Object` as the first parameter should really just be functions on `*Object` directly.
+3. ???
+4. PROFIT! (i.e. make something cool).
 
 Documentation
 -------------
