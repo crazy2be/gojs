@@ -30,8 +30,8 @@ func TestStringString(t *testing.T) {
 		if str.String() != item {
 			t.Errorf("str.String() returned \"%v\", expected \"%v\"", str.String(), item)
 		}
-		if str.Length() != uint32(len([]int(item))) {
-			t.Errorf("str.Length() returned \"%v\", expected \"%v\"", str.Length(), len([]int(item)))
+		if str.Length() != uint32(len([]rune(item))) {
+			t.Errorf("str.Length() returned \"%v\", expected \"%v\"", str.Length(), len([]rune(item)))
 		}
 	}
 }

@@ -2,9 +2,9 @@ package gojs
 
 import (
 	"log"
-	"os"
 	"testing"
 	"unsafe"
+    "syscall"
 )
 
 type reflect_object struct {
@@ -212,7 +212,7 @@ func TestNewFunctionWithCallback2(t *testing.T) {
 
 func TestNewFunctionWithCallbackPanic(t *testing.T) {
 	var callbacks = []GoFunctionCallback{}
-	var error_msgs = []string{"error from go!", os.ENOMEM.String()}
+	var error_msgs = []string{"error from go!", syscall.ENOMEM.Error()}
 
 	callbacks = append(callbacks,
 		func(ctx *Context, obj *Object, thisObject *Object, _ []*Value) *Value {
@@ -221,7 +221,7 @@ func TestNewFunctionWithCallbackPanic(t *testing.T) {
 		})
 	callbacks = append(callbacks,
 		func(ctx *Context, obj *Object, thisObject *Object, _ []*Value) *Value {
-			panic(os.ENOMEM)
+			panic(syscall.ENOMEM)
 			return nil
 		})
 
@@ -344,7 +344,7 @@ func TestNativeFunctionPanic(t *testing.T) {
 	defer ctx.Release()
 
 	callbacks := []func(){
-		func() { panic("Panic!") }, func() { panic(os.ENOMEM) }}
+		func() { panic("Panic!") }, func() { panic(syscall.ENOMEM) }}
 
 	for _, callback := range callbacks {
 
