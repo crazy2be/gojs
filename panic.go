@@ -7,14 +7,14 @@ package gojs
 // #include "callback.h"
 import "C"
 import (
-	"os"
 	"fmt"
 	"log"
+	"syscall"
 	"unsafe"
 )
 
 // NewGoError represents an error that happened within go, perhaps a panic in a callback function or some such. It is used to report these errors *to* javascript.
-func (ctx *Context) NewGoError(desc string) (*Value) {
+func (ctx *Context) NewGoError(desc string) *Value {
 	log.Println("Go error:", desc)
 	val := ctx.NewStringValue(desc)
 	return val
@@ -77,7 +77,7 @@ func newPanicError(ctx *Context, value *Value) *Error {
 		if exception != nil {
 			// An error occurred during extraction of string
 			// Let's not go to far down the rabbit hole
-			panic(os.ENOMEM)
+			panic(syscall.ENOMEM)
 		}
 		defer C.JSStringRelease(ret)
 

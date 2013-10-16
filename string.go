@@ -1,18 +1,18 @@
 package gojs
 
-import "os"
-import "unsafe"
-
 // #include <stdlib.h>
 // #include <JavaScriptCore/JSStringRef.h>
 import "C"
+import (
+	"syscall"
+	"unsafe"
+)
 
 //=========================================================
 // StringRef
 //
 
 type String struct {
-
 }
 
 func NewString(value string) *String {
@@ -35,7 +35,7 @@ func (ref *String) String() string {
 	len := C.JSStringGetMaximumUTF8CStringSize((C.JSStringRef)(unsafe.Pointer(ref)))
 	buffer := C.malloc(len)
 	if buffer == nil {
-		panic(os.ENOMEM)
+		panic(syscall.ENOMEM)
 	}
 	defer C.free(buffer)
 	C.JSStringGetUTF8CString((C.JSStringRef)(unsafe.Pointer(ref)), (*C.char)(buffer), len)

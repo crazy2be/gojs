@@ -51,7 +51,7 @@ func (ctx *Context) NewArray(items []*Value) (*Object, *Exception) {
 		carr, carrlen := ctx.newCValueArray(items)
 		ret.ref = C.JSObjectMakeArray(ctx.ref, carrlen, carr, &exception.val.ref)
 	} else {
-		ret.ref = C.JSObjectMakeArray(ctx.ref, 0, nil,  &exception.val.ref)
+		ret.ref = C.JSObjectMakeArray(ctx.ref, 0, nil, &exception.val.ref)
 	}
 	if exception.val != nil {
 		return nil, exception
@@ -273,7 +273,7 @@ func (ctx *Context) CallAsFunction(obj *Object, thisObject *Object, parameters [
 	exception := ctx.NewException()
 
 	Cparameters, n := ctx.newCValueArray(parameters)
-	
+
 	if thisObject == nil {
 		thisObject = ctx.newObject(nil)
 		log.Println(thisObject.ref)
@@ -283,20 +283,20 @@ func (ctx *Context) CallAsFunction(obj *Object, thisObject *Object, parameters [
 		log.Println(str1, err)
 		str2, err := ctx.ToString(parameters[1])
 		log.Println(str2, err)
-		str, err :=  ctx.ToString(ctx.newValue(*Cparameters))
+		str, err := ctx.ToString(ctx.newValue(*Cparameters))
 		log.Println(str, err)
-// 		val2 := ctx.newValue(C.JSValueRef(int(uintptr(unsafe.Pointer(Cparameters)) + 0x1)))
-// 		str2, err := ctx.ToString(val2)
-// 		log.Println(str2, err)
+		// 		val2 := ctx.newValue(C.JSValueRef(int(uintptr(unsafe.Pointer(Cparameters)) + 0x1)))
+		// 		str2, err := ctx.ToString(val2)
+		// 		log.Println(str2, err)
 	}
 	log.Println("In CallAsFunction, about to enter C mode...")
 	log.Println(obj, thisObject, parameters, Cparameters, n, exception)
-	
+
 	ret := C.JSObjectCallAsFunction(ctx.ref, obj.ref, thisObject.ref, n, Cparameters, &exception.val.ref)
-	
+
 	log.Println("Successfully exited C mode...")
 	log.Println(ret)
-	
+
 	if exception.val != nil {
 		return nil, exception
 	}
@@ -345,7 +345,6 @@ const (
 )
 
 type PropertyNameArray struct {
-
 }
 
 func (ctx *Context) CopyPropertyNames(obj *Object) *PropertyNameArray {

@@ -9,7 +9,7 @@ func NewContext() *Context {
 	const c_nil = unsafe.Pointer(uintptr(0))
 
 	ctx := new(Context)
-	
+
 	ctx.ref = C.JSContextRef(C.JSGlobalContextCreate((*[0]uint8)(c_nil)))
 	return ctx
 }
@@ -17,7 +17,7 @@ func NewContext() *Context {
 func newContext(ref C.JSContextRef) *Context {
 	ctx := new(Context)
 	ctx.ref = ref
-	
+
 	return ctx
 }
 

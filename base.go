@@ -5,8 +5,8 @@ package gojs
 // #include <JavaScriptCore/JSBase.h>
 import "C"
 import (
-	"unsafe"
 	"log"
+	"unsafe"
 )
 
 //=========================================================
@@ -14,7 +14,6 @@ import (
 //
 
 type ContextGroup struct {
-
 }
 
 type Context struct {
@@ -32,7 +31,7 @@ func (ctx *Context) EvaluateScript(script string, obj *Object, source_url string
 		sourceRef = NewString(source_url)
 		defer sourceRef.Release()
 	}
-	
+
 	if obj == nil {
 		obj = ctx.NewEmptyObject()
 	}
@@ -40,7 +39,7 @@ func (ctx *Context) EvaluateScript(script string, obj *Object, source_url string
 	exception := ctx.NewException()
 
 	log.Println("About to evaluate script:", script, obj, source_url, startingLineNumber)
-	
+
 	ret := C.JSEvaluateScript(ctx.ref,
 		C.JSStringRef(unsafe.Pointer(scriptRef)), obj.ref,
 		C.JSStringRef(unsafe.Pointer(sourceRef)), C.int(startingLineNumber), &exception.val.ref)

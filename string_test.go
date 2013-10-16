@@ -1,8 +1,8 @@
 package gojs_test
 
 import (
-	"testing"
 	"gojs"
+	"testing"
 )
 
 var (

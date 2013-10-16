@@ -1,10 +1,10 @@
 package gojs
 
 import (
-	"testing"
-	"unsafe"
 	"log"
 	"os"
+	"testing"
+	"unsafe"
 )
 
 type reflect_object struct {
@@ -66,7 +66,7 @@ func checkArrsEqual(t *testing.T, vals []*Value, expectedVals []*Value) {
 func TestNewCValueArray(t *testing.T) {
 	ctx := NewContext()
 	defer ctx.Release()
-	
+
 	valarr := make([]*Value, 5)
 	valstrs := make([]string, 5)
 	valarr[0] = ctx.NewValue(0)
@@ -79,31 +79,31 @@ func TestNewCValueArray(t *testing.T) {
 	valstrs[3] = "2309240"
 	valarr[4] = ctx.NewValue(0x934)
 	valstrs[4] = "2356"
-	
+
 	cptr, size := ctx.newCValueArray(valarr)
-	
+
 	// Make sure the C array is correct
 	ptrs := unsafe.Sizeof(uintptr(0))
 	uptr := uintptr(unsafe.Pointer(cptr))
-	ptr0 := unsafe.Pointer(uptr+0)
+	ptr0 := unsafe.Pointer(uptr + 0)
 	val0 := ctx.ptrToValue(ptr0)
-	ptr1 := unsafe.Pointer(uptr+(ptrs*1))
+	ptr1 := unsafe.Pointer(uptr + (ptrs * 1))
 	val1 := ctx.ptrToValue(ptr1)
-	ptr2 := unsafe.Pointer(uptr+(ptrs*2))
+	ptr2 := unsafe.Pointer(uptr + (ptrs * 2))
 	val2 := ctx.ptrToValue(ptr2)
-	ptr3 := unsafe.Pointer(uptr+(ptrs*3))
+	ptr3 := unsafe.Pointer(uptr + (ptrs * 3))
 	val3 := ctx.ptrToValue(ptr3)
-	ptr4 := unsafe.Pointer(uptr+(ptrs*4))
+	ptr4 := unsafe.Pointer(uptr + (ptrs * 4))
 	val4 := ctx.ptrToValue(ptr4)
-	
+
 	checkExpected(t, val0, valstrs[0])
 	checkExpected(t, val1, valstrs[1])
 	checkExpected(t, val2, valstrs[2])
 	checkExpected(t, val3, valstrs[3])
 	checkExpected(t, val4, valstrs[4])
-	
+
 	origarray := ctx.newGoValueArray(unsafe.Pointer(cptr), uint(size))
-	
+
 	checkArrsEqual(t, valarr, origarray)
 }
 
@@ -162,7 +162,7 @@ func terrf(t *testing.T, format string, v ...interface{}) {
 }
 
 func init() {
-	log.SetFlags(log.Ltime|log.Lshortfile)
+	log.SetFlags(log.Ltime | log.Lshortfile)
 }
 
 func TestNewFunctionWithCallback2(t *testing.T) {
@@ -430,15 +430,15 @@ func TestNewNativeObjectSet(t *testing.T) {
 	defer ctx.Release()
 
 	tlog(t, "Creating new native object from", obj)
-	
+
 	v := ctx.NewNativeObject(obj)
-	
+
 	tlog(t, "Setting property n")
-	
+
 	ctx.SetProperty(ctx.GlobalObject(), "n", v.ToValue(), 0)
-	
+
 	tlog(t, "Creating value for property I")
-	
+
 	// Set the integer property
 	i := ctx.NewNumberValue(-2)
 	tlog(t, "Setting property I", i)
@@ -448,7 +448,7 @@ func TestNewNativeObjectSet(t *testing.T) {
 	if obj.I != -2 {
 		t.Errorf("ctx.SetProperty did not set integer field correctly")
 	}
-	
+
 	tlog(t, "Setting property U")
 
 	// Set the unsigned integer property
@@ -457,8 +457,8 @@ func TestNewNativeObjectSet(t *testing.T) {
 	if obj.U != 3 {
 		t.Fatalf("ctx.SetProperty did not set unsigned integer field correctly")
 	}
-	
-// 	t.Error("Skipping setting property U to invalid value, it currently causes a fault.")
+
+	// 	t.Error("Skipping setting property U to invalid value, it currently causes a fault.")
 
 	// Set the unsigned integer property
 	u = ctx.NewNumberValue(-3)
@@ -511,10 +511,10 @@ func TestNewNativeObjectMethod(t *testing.T) {
 	ctx.SetProperty(ctx.GlobalObject(), "n", v.ToValue(), 0)
 
 	tlog(t, "Testing n.Add()")
-	
+
 	// Following script access should be successful
 	ret, err := ctx.EvaluateScript("n.Add()", nil, "./testing.go", 1)
-	
+
 	tlog(t, "Evaluated Script")
 	if err != nil {
 		t.Errorf("ctx.EvaluateScript returned an error: %#v", *err)
@@ -534,7 +534,7 @@ func TestNewNativeObjectMethod(t *testing.T) {
 	if num != 2.0 {
 		t.Errorf("ctx.EvaluateScript incorrect value when accessing native object's field.")
 	}
-	
+
 	tlog(t, "Testing n.AddWith()")
 
 	// Following script access should be successful

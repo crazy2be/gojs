@@ -6,11 +6,11 @@ package gojs
 // #include "callback.h"
 import "C"
 import (
-	"os"
-	"reflect"
-	"unsafe"
-	"log"
 	"fmt"
+	"log"
+	"reflect"
+	"syscall"
+	"unsafe"
 )
 
 type object_data struct {
@@ -35,25 +35,25 @@ func init() {
 	// Create the class definition for JavaScriptCore
 	nativecallback = C.JSClassDefinition_NativeCallback()
 	if nativecallback == nil {
-		panic(os.ENOMEM)
+		panic(syscall.ENOMEM)
 	}
 
 	// Create the class definition for JavaScriptCore
 	nativeobject = C.JSClassDefinition_NativeObject()
 	if nativeobject == nil {
-		panic(os.ENOMEM)
+		panic(syscall.ENOMEM)
 	}
 
 	// Create the class definition for JavaScriptCore
 	nativefunction = C.JSClassDefinition_NativeFunction()
 	if nativefunction == nil {
-		panic(os.ENOMEM)
+		panic(syscall.ENOMEM)
 	}
 
 	// Create the class definition for JavaScriptCore
 	nativemethod = C.JSClassDefinition_NativeMethod()
 	if nativemethod == nil {
-		panic(os.ENOMEM)
+		panic(syscall.ENOMEM)
 	}
 
 	// Create map for native objects
@@ -76,7 +76,7 @@ func (ctx *Context) ptrToValue(ptr unsafe.Pointer) *Value {
 	return ctx.newValue(*(*C.JSValueRef)(ptr))
 }
 
-func (ctx *Context) newGoValueArray(ptr unsafe.Pointer, size uint) ([]*Value) {
+func (ctx *Context) newGoValueArray(ptr unsafe.Pointer, size uint) []*Value {
 	if uintptr(ptr) == 0x00000000 {
 		return nil
 	}
@@ -85,7 +85,7 @@ func (ctx *Context) newGoValueArray(ptr unsafe.Pointer, size uint) ([]*Value) {
 	for i := uint(0); i < size; i++ {
 		goarr[i] = ctx.ptrToValue(ptr)
 		// Increment the pointer by one space
-		ptr = unsafe.Pointer(uintptr(ptr)+ptrs)
+		ptr = unsafe.Pointer(uintptr(ptr) + ptrs)
 	}
 	return goarr
 }
@@ -143,16 +143,16 @@ func (ctx *Context) reflectToJSValue(value reflect.Value) *Value {
 		}
 	}
 	// No acceptable conversion found.
-	panic("Parameter can not be converted from Go native type. Type is "+value.Kind().String()+", value is "+value.String())
+	panic("Parameter can not be converted from Go native type. Type is " + value.Kind().String() + ", value is " + value.String())
 }
 
 func recover_to_javascript(ctx *Context, r interface{}) *Value {
-// I don't think this os.Error check is necessary, since os.Error == Stringer.
-// 	if re, ok := r.(os.Error); ok {
-// 		// TODO:  Check for error return from NewError
-// 		ret, _ := ctx.NewError(re.String())
-// 		return ret.ToValue()
-// 	}
+	// I don't think this os.Error check is necessary, since os.Error == Stringer.
+	// 	if re, ok := r.(os.Error); ok {
+	// 		// TODO:  Check for error return from NewError
+	// 		ret, _ := ctx.NewError(re.String())
+	// 		return ret.ToValue()
+	// 	}
 	if str, ok := r.(Stringer); ok {
 		return ctx.NewGoError(str.String())
 	}
@@ -192,7 +192,8 @@ func (ctx *Context) jsValuesToReflect(param []*Value) []reflect.Value {
 func javascript_to_value(field reflect.Value, ctx *Context, value *Value) (err *Value) {
 	switch field.Kind() {
 	case reflect.String:
-		str, err := ctx.ToString(value)
+		var str string
+		str, err = ctx.ToString(value)
 		if err == nil {
 			field.SetString(str)
 		} else {
@@ -200,7 +201,8 @@ func javascript_to_value(field reflect.Value, ctx *Context, value *Value) (err *
 		}
 
 	case reflect.Float32, reflect.Float64:
-		flt, err := ctx.ToNumber(value)
+		var flt float64
+		flt, err = ctx.ToNumber(value)
 		if err == nil {
 			field.SetFloat(flt)
 		} else {
@@ -208,7 +210,8 @@ func javascript_to_value(field reflect.Value, ctx *Context, value *Value) (err *
 		}
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		flt, err := ctx.ToNumber(value)
+		var flt float64
+		flt, err = ctx.ToNumber(value)
 		if err == nil {
 			field.SetInt(int64(flt))
 		} else {
@@ -249,7 +252,7 @@ func register(data *object_data) {
 func finalize_go(data unsafe.Pointer) {
 	// Called from JavaScriptCore finalizer methods
 	id := uintptr(data)
-	objects[id] = nil, false
+	delete(objects, id)
 }
 
 //=========================================================
@@ -278,12 +281,12 @@ func nativecallback_CallAsFunction_go(data_ptr unsafe.Pointer, uctx unsafe.Point
 			*exception = unsafe.Pointer(recover_to_javascript(ctx, r).ref)
 		}
 	}()
-	
+
 	log.Println(data_ptr, uctx, ctx, uobj, uthisObject, argumentCount, arguments, exception)
 
 	data := (*object_data)(data_ptr)
 	ret := data.val.Interface().(GoFunctionCallback)(
-		ctx, ctx.newObject(C.JSObjectRef(uobj)), ctx.newObject(C.JSObjectRef(uthisObject)), ctx.newGoValueArray(arguments, argumentCount)/*(*[1 << 14]*Value)(arguments)[0:argumentCount]*/)
+		ctx, ctx.newObject(C.JSObjectRef(uobj)), ctx.newObject(C.JSObjectRef(uthisObject)), ctx.newGoValueArray(arguments, argumentCount) /*(*[1 << 14]*Value)(arguments)[0:argumentCount]*/)
 	if ret == nil {
 		return unsafe.Pointer(nil)
 	}
@@ -323,7 +326,7 @@ func docall(ctx *Context, val reflect.Value, argumentCount uint, arguments unsaf
 	}
 
 	log.Println("Converted arguments to native go reflect types. About to actually call the callback function...")
-	
+
 	log.Println(in)
 
 	// Step two, perform the call
@@ -357,7 +360,7 @@ func nativefunction_CallAsFunction_go(data_ptr unsafe.Pointer, uctx unsafe.Point
 	}
 
 	log.Println("About to docall()!")
-	
+
 	ret := docall(ctx, val, argumentCount, arguments)
 	if ret == nil {
 		return nil
@@ -424,7 +427,7 @@ func nativeobject_GetProperty_go(data_ptr, uctx, _, propertyName unsafe.Pointer,
 func internal_go_error(ctx *Context) *Exception {
 	param := ctx.NewStringValue("Internal Go error.")
 
-	exception := ctx.NewException()//C.JSValueRef(unsafe.Pointer(nil))
+	exception := ctx.NewException() //C.JSValueRef(unsafe.Pointer(nil))
 	ret := C.JSObjectMakeError(ctx.ref,
 		C.size_t(1), &param.ref,
 		&exception.val.ref)
