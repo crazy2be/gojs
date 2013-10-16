@@ -3,15 +3,15 @@ Go JavaScript Bindings
 
 Highly experiemental, I'm not even sure these work currently. Original author is Robery Johnstone, and his mercurial repository can be found at https://bitbucket.org/rj/golang-javascriptcore/. I have updated the bindings to work with the latest changes to the reflect API, bits of it manually. The entire test suite minus one function (finally!) passes.
 
+Update (2013/10/16): The test suite does not work at all, but it compiles again with go 1.0. Feel free to hack away at this if you think it might be useful :).
+
 Use
 ---
 
 Install:
-(goinstall doesn't work, likely because of cgo and headers)
 
 	git clone git@github.com:crazy2be/gojs.git
-	cd gojs
-	gomake install
+	go install gojs
 
 Import:
 
