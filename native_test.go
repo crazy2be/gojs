@@ -2,9 +2,9 @@ package gojs
 
 import (
 	"log"
+	"syscall"
 	"testing"
 	"unsafe"
-    "syscall"
 )
 
 type reflect_object struct {

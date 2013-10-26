@@ -1,8 +1,8 @@
 package main
 
 import (
-	"gojs"
 	"fmt"
+	"gojs"
 )
 
 func main() {
@@ -12,7 +12,7 @@ func main() {
 	ret, err := ctx.EvaluateScript("['hello', 'world'].join(' ')", nil, ".", 0)
 
 	if err != nil {
-		fmt.Println("Script had an error :(", ctx.ToStringOrDie(err))
+		fmt.Println("Script had an error :(", err.String())
 		return
 	}
 
