@@ -14,9 +14,11 @@ func NewContext() *Context {
 	return ctx
 }
 
-func newContext(ref C.JSContextRef) *Context {
+type RawContext C.JSContextRef
+
+func NewContextFrom(raw RawContext) *Context {
 	ctx := new(Context)
-	ctx.ref = ref
+	ctx.ref = C.JSContextRef(raw)
 
 	return ctx
 }

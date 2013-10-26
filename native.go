@@ -275,7 +275,7 @@ func (ctx *Context) NewFunctionWithCallback(callback GoFunctionCallback) *Object
 
 //export nativecallback_CallAsFunction_go
 func nativecallback_CallAsFunction_go(data_ptr unsafe.Pointer, uctx unsafe.Pointer, uobj unsafe.Pointer, uthisObject unsafe.Pointer, argumentCount uint, arguments unsafe.Pointer, exception *unsafe.Pointer) unsafe.Pointer {
-	ctx := newContext(C.JSContextRef(uctx))
+	ctx := NewContextFrom(RawContext(uctx))
 	defer func() {
 		if r := recover(); r != nil {
 			*exception = unsafe.Pointer(recover_to_javascript(ctx, r).ref)
@@ -342,7 +342,7 @@ func docall(ctx *Context, val reflect.Value, argumentCount uint, arguments unsaf
 
 //export nativefunction_CallAsFunction_go
 func nativefunction_CallAsFunction_go(data_ptr unsafe.Pointer, uctx unsafe.Pointer, _ unsafe.Pointer, _ unsafe.Pointer, argumentCount uint, arguments unsafe.Pointer, exception *unsafe.Pointer) unsafe.Pointer {
-	ctx := newContext(C.JSContextRef(uctx))
+	ctx := NewContextFrom(RawContext(uctx))
 	defer func() {
 		if r := recover(); r != nil {
 			*exception = unsafe.Pointer(recover_to_javascript(ctx, r).ref)
@@ -388,7 +388,7 @@ func (ctx *Context) NewNativeObject(obj interface{}) *Object {
 
 //export nativeobject_GetProperty_go
 func nativeobject_GetProperty_go(data_ptr, uctx, _, propertyName unsafe.Pointer, exception *unsafe.Pointer) unsafe.Pointer {
-	ctx := newContext(C.JSContextRef(uctx))
+	ctx := NewContextFrom(RawContext(uctx))
 	// Get name of property as a go string
 	name := (*String)(propertyName).String()
 
@@ -443,7 +443,7 @@ func internal_go_error(ctx *Context) *Exception {
 
 //export nativeobject_SetProperty_go
 func nativeobject_SetProperty_go(data_ptr, uctx, _, propertyName, value unsafe.Pointer, exception *unsafe.Pointer) C.char {
-	ctx := newContext(C.JSContextRef(uctx))
+	ctx := NewContextFrom(RawContext(uctx))
 	// Get name of property as a go string
 	name := (*String)(propertyName).String()
 
@@ -507,7 +507,7 @@ func newNativeMethod(ctx *Context, obj *object_data, method int) *Object {
 
 //export nativemethod_CallAsFunction_go
 func nativemethod_CallAsFunction_go(data_ptr unsafe.Pointer, uctx unsafe.Pointer, obj unsafe.Pointer, thisObject unsafe.Pointer, argumentCount uint, arguments unsafe.Pointer, exception *unsafe.Pointer) unsafe.Pointer {
-	ctx := newContext(C.JSContextRef(uctx))
+	ctx := NewContextFrom(RawContext(uctx))
 	defer func() {
 		if r := recover(); r != nil {
 			*exception = unsafe.Pointer(recover_to_javascript(ctx, r))
