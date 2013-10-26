@@ -17,10 +17,9 @@ static void nativecallback_Finalize(JSObjectRef object)
 static JSValueRef nativecallback_CallAsFunction(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
 {
 	assert( exception );
-
 	// Routine must set private to callback point in Go
 	void* data = JSObjectGetPrivate( function );
-	JSValueRef ret = nativecallback_CallAsFunction_go( data, ctx, function, thisObject, argumentCount, arguments, (void**)exception );
+	JSValueRef ret = nativecallback_CallAsFunction_go( data, ctx, function, thisObject, argumentCount, (void *)arguments, exception );
 	assert( *exception==NULL || (*exception && !ret) );
 	return ret;
 }
@@ -147,7 +146,7 @@ static bool nativeobject_SetProperty(JSContextRef ctx, JSObjectRef object, JSStr
 
 	// Routine must set private to callback point in Go
 	void* data = JSObjectGetPrivate( object );
-	return nativeobject_SetProperty_go( data, (void*)ctx, (void*)object, (void*)propertyName, (void*)value, (void**)exception );
+	return nativeobject_SetProperty_go( data, (void*)ctx, (void*)object, propertyName, (void*)value, exception );
 }
 
 static JSValueRef nativeobject_ConvertToType(JSContextRef ctx, JSObjectRef object, JSType type, JSValueRef* exception)

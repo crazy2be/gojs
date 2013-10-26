@@ -29,103 +29,94 @@ func (ctx *Context) newObject(ref C.JSObjectRef) *Object {
 	return obj
 }
 
-// DEPRECATED! Use ctx.newObject() instead, this should be private!
-func (ctx *Context) NewObject(ref C.JSObjectRef) *Object {
-	log.Println("Warning: Use of depricated method NewObject!")
-	return ctx.newObject(ref)
-	//ret := 
-	//return (*Object)(unsafe.Pointer(ret))
-}
-
 func (ctx *Context) NewEmptyObject() *Object {
 	obj := C.JSObjectMake(ctx.ref, nil, nil)
 	return ctx.newObject(obj)
 }
 
-func (ctx *Context) NewArray(items []*Value) (*Object, *Exception) {
-	var exception = ctx.NewException()
+func (ctx *Context) NewArray(items []*Value) (*Object, error) {
+	errVal := ctx.newErrorValue()
 
 	ret := ctx.NewEmptyObject()
-	log.Println(exception)
 	if items != nil {
 		carr, carrlen := ctx.newCValueArray(items)
-		ret.ref = C.JSObjectMakeArray(ctx.ref, carrlen, carr, &exception.val.ref)
+		ret.ref = C.JSObjectMakeArray(ctx.ref, carrlen, carr, &errVal.ref)
 	} else {
-		ret.ref = C.JSObjectMakeArray(ctx.ref, 0, nil, &exception.val.ref)
+		ret.ref = C.JSObjectMakeArray(ctx.ref, 0, nil, &errVal.ref)
 	}
-	if exception.val != nil {
-		return nil, exception
+	if errVal.ref != nil {
+		return nil, errVal
 	}
 	return ret, nil
 }
 
-func (ctx *Context) NewDate() (*Object, *Exception) {
-	var exception = ctx.NewException()
+func (ctx *Context) NewDate() (*Object, error) {
+	errVal := ctx.newErrorValue()
 
 	ret := C.JSObjectMakeDate(ctx.ref,
 		0, nil,
-		&exception.val.ref)
-	if exception.val != nil {
-		return nil, exception
+		&errVal.ref)
+	if errVal.ref != nil {
+		return nil, errVal
 	}
-	return ctx.NewObject(ret), nil
+	return ctx.newObject(ret), nil
 }
 
-func (ctx *Context) NewDateWithMilliseconds(milliseconds float64) (*Object, *Exception) {
-	var exception = ctx.NewException()
+func (ctx *Context) NewDateWithMilliseconds(milliseconds float64) (*Object, error) {
+	errVal := ctx.newErrorValue()
 
 	param := ctx.NewNumberValue(milliseconds)
 
 	ret := C.JSObjectMakeDate(ctx.ref,
 		C.size_t(1), &param.ref,
-		&exception.val.ref)
-	if exception.val != nil {
-		return nil, exception
+		&errVal.ref)
+	if errVal.ref != nil {
+		return nil, errVal
 	}
-	return ctx.NewObject(ret), nil
+	return ctx.newObject(ret), nil
 }
 
-func (ctx *Context) NewDateWithString(date string) (*Object, *Exception) {
-	var exception = ctx.NewException()
+func (ctx *Context) NewDateWithString(date string) (*Object, error) {
+	errVal := ctx.newErrorValue()
 
 	param := ctx.NewStringValue(date)
 
 	ret := C.JSObjectMakeDate(ctx.ref,
 		C.size_t(1), &param.ref,
-		&exception.val.ref)
-	if exception.val != nil {
-		return nil, exception
+		&errVal.ref)
+	if errVal.ref != nil {
+		return nil, errVal
 	}
-	return ctx.NewObject(ret), nil
+	return ctx.newObject(ret), nil
 }
 
-func (ctx *Context) NewRegExp(regex string) (*Object, *Exception) {
-	exception := ctx.NewException()
+func (ctx *Context) NewRegExp(regex string) (*Object, error) {
+	errVal := ctx.newErrorValue()
 
 	param := ctx.NewStringValue(regex)
 
 	ret := C.JSObjectMakeRegExp(ctx.ref,
 		C.size_t(1), &param.ref,
-		&exception.val.ref)
-	if exception.val != nil {
-		return nil, exception
+		&errVal.ref)
+	if errVal.ref != nil {
+		return nil, errVal
 	}
 	return ctx.newObject(ret), nil
 }
 
-func (ctx *Context) NewRegExpFromValues(parameters []*Value) (*Object, *Exception) {
-	exception := ctx.NewException()
+func (ctx *Context) NewRegExpFromValues(parameters []*Value) (*Object, error) {
+	errVal := ctx.newErrorValue()
 
 	ret := C.JSObjectMakeRegExp(ctx.ref,
 		C.size_t(len(parameters)), &parameters[0].ref,
-		&exception.val.ref)
-	if exception.val != nil {
-		return nil, exception
+		&errVal.ref)
+	if errVal.ref != nil {
+		return nil, errVal
 	}
 	return ctx.newObject(ret), nil
 }
 
-func (ctx *Context) NewFunction(name string, parameters []string, body string, source_url string, starting_line_number int) (*Object, *Exception) {
+func (ctx *Context) NewFunction(name string, parameters []string, body string, source_url string, starting_line_number int) (*Object, error) {
 	Cname := NewString(name)
 	defer Cname.Release()
 
@@ -144,16 +135,15 @@ func (ctx *Context) NewFunction(name string, parameters []string, body string, s
 		defer sourceRef.Release()
 	}
 
-	exception := ctx.NewException()
-
+	errVal := ctx.newErrorValue()
 	ret := C.JSObjectMakeFunction(ctx.ref,
 		(C.JSStringRef)(unsafe.Pointer(Cname)),
 		C.unsigned(len(Cparameters)), &Cparameters[0],
 		(C.JSStringRef)(unsafe.Pointer(Cbody)),
 		(C.JSStringRef)(unsafe.Pointer(sourceRef)),
-		C.int(starting_line_number), &exception.val.ref)
-	if exception.val != nil {
-		return nil, exception
+		C.int(starting_line_number), &errVal.ref)
+	if errVal.ref != nil {
+		return nil, errVal
 	}
 	return ctx.newObject(ret), nil
 }
@@ -175,66 +165,66 @@ func (ctx *Context) HasProperty(obj *Object, name string) bool {
 	return bool(ret)
 }
 
-func (ctx *Context) GetProperty(obj *Object, name string) (*Value, *Exception) {
+func (ctx *Context) GetProperty(obj *Object, name string) (*Value, error) {
 	jsstr := NewString(name)
 	defer jsstr.Release()
 
-	exception := ctx.NewException()
+	errVal := ctx.newErrorValue()
 
-	ret := C.JSObjectGetProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), &exception.val.ref)
-	if exception.val != nil {
-		return nil, exception
+	ret := C.JSObjectGetProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), &errVal.ref)
+	if errVal.ref != nil {
+		return nil, errVal
 	}
 
 	return ctx.newValue(ret), nil
 }
 
-func (ctx *Context) GetPropertyAtIndex(obj *Object, index uint16) (*Value, *Exception) {
-	exception := ctx.NewException()
+func (ctx *Context) GetPropertyAtIndex(obj *Object, index uint16) (*Value, error) {
+	errVal := ctx.newErrorValue()
 
-	ret := C.JSObjectGetPropertyAtIndex(ctx.ref, obj.ref, C.unsigned(index), &exception.val.ref)
-	if exception != nil {
-		return nil, exception
+	ret := C.JSObjectGetPropertyAtIndex(ctx.ref, obj.ref, C.unsigned(index), &errVal.ref)
+	if errVal.ref != nil {
+		return nil, errVal
 	}
 
 	return ctx.newValue(ret), nil
 }
 
-func (ctx *Context) SetProperty(obj *Object, name string, rhs *Value, attributes uint8) *Exception {
+func (ctx *Context) SetProperty(obj *Object, name string, rhs *Value, attributes uint8) error {
 	jsstr := NewString(name)
 	defer jsstr.Release()
 
-	exception := ctx.NewException()
+	errVal := ctx.newErrorValue()
 
 	C.JSObjectSetProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), rhs.ref,
-		(C.JSPropertyAttributes)(attributes), &exception.val.ref)
-	if exception.val != nil {
-		return exception
+		(C.JSPropertyAttributes)(attributes), &errVal.ref)
+	if errVal.ref != nil {
+		return errVal
 	}
 
 	return nil
 }
 
-func (ctx *Context) SetPropertyAtIndex(obj *Object, index uint16, rhs *Value) *Exception {
-	exception := ctx.NewException()
+func (ctx *Context) SetPropertyAtIndex(obj *Object, index uint16, rhs *Value) error {
+	errVal := ctx.newErrorValue()
 
-	C.JSObjectSetPropertyAtIndex(ctx.ref, obj.ref, C.unsigned(index), rhs.ref, &exception.val.ref)
-	if exception != nil {
-		return exception
+	C.JSObjectSetPropertyAtIndex(ctx.ref, obj.ref, C.unsigned(index), rhs.ref, &errVal.ref)
+	if errVal.ref != nil {
+		return errVal
 	}
 
 	return nil
 }
 
-func (ctx *Context) DeleteProperty(obj *Object, name string) (bool, *Exception) {
+func (ctx *Context) DeleteProperty(obj *Object, name string) (bool, error) {
 	jsstr := NewString(name)
 	defer jsstr.Release()
 
-	exception := ctx.NewException()
+	errVal := ctx.newErrorValue()
 
-	ret := C.JSObjectDeleteProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), &exception.val.ref)
-	if exception != nil {
-		return false, exception
+	ret := C.JSObjectDeleteProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), &errVal.ref)
+	if errVal.ref != nil {
+		return false, errVal
 	}
 
 	return bool(ret), nil
@@ -269,36 +259,18 @@ func (ctx *Context) IsFunction(obj *Object) bool {
 	return bool(ret)
 }
 
-func (ctx *Context) CallAsFunction(obj *Object, thisObject *Object, parameters []*Value) (*Value, *Exception) {
-	exception := ctx.NewException()
-
-	Cparameters, n := ctx.newCValueArray(parameters)
-
+func (ctx *Context) CallAsFunction(obj *Object, thisObject *Object, parameters []*Value) (*Value, error) {
+	errVal := ctx.newErrorValue()
+	cParameters, n := ctx.newCValueArray(parameters)
 	if thisObject == nil {
 		thisObject = ctx.newObject(nil)
 		log.Println(thisObject.ref)
 	}
-	if len(parameters) > 0 {
-		str1, err := ctx.ToString(parameters[0])
-		log.Println(str1, err)
-		str2, err := ctx.ToString(parameters[1])
-		log.Println(str2, err)
-		str, err := ctx.ToString(ctx.newValue(*Cparameters))
-		log.Println(str, err)
-		// 		val2 := ctx.newValue(C.JSValueRef(int(uintptr(unsafe.Pointer(Cparameters)) + 0x1)))
-		// 		str2, err := ctx.ToString(val2)
-		// 		log.Println(str2, err)
-	}
-	log.Println("In CallAsFunction, about to enter C mode...")
-	log.Println(obj, thisObject, parameters, Cparameters, n, exception)
 
-	ret := C.JSObjectCallAsFunction(ctx.ref, obj.ref, thisObject.ref, n, Cparameters, &exception.val.ref)
+	ret := C.JSObjectCallAsFunction(ctx.ref, obj.ref, thisObject.ref, n, cParameters, &errVal.ref)
 
-	log.Println("Successfully exited C mode...")
-	log.Println(ret)
-
-	if exception.val != nil {
-		return nil, exception
+	if errVal.ref != nil {
+		return nil, errVal
 	}
 
 	return ctx.newValue(ret), nil
@@ -309,8 +281,8 @@ func (ctx *Context) IsConstructor(obj *Object) bool {
 	return bool(ret)
 }
 
-func (ctx *Context) CallAsConstructor(obj *Object, parameters []*Value) (*Value, *Exception) {
-	exception := ctx.NewException()
+func (ctx *Context) CallAsConstructor(obj *Object, parameters []*Value) (*Value, error) {
+	errVal := ctx.newErrorValue()
 
 	var Cparameters *C.JSValueRef
 	if len(parameters) > 0 {
@@ -320,9 +292,9 @@ func (ctx *Context) CallAsConstructor(obj *Object, parameters []*Value) (*Value,
 	ret := C.JSObjectCallAsConstructor(ctx.ref, obj.ref,
 		C.size_t(len(parameters)),
 		Cparameters,
-		&exception.val.ref)
-	if exception != nil {
-		return nil, exception
+		&errVal.ref)
+	if errVal.ref != nil {
+		return nil, errVal
 	}
 
 	return ctx.newObject(ret).ToValue(), nil

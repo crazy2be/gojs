@@ -22,7 +22,7 @@ type Context struct {
 
 type GlobalContext Context
 
-func (ctx *Context) EvaluateScript(script string, obj *Object, source_url string, startingLineNumber int) (*Value, *Exception) {
+func (ctx *Context) EvaluateScript(script string, obj *Object, source_url string, startingLineNumber int) (*Value, error) {
 	scriptRef := NewString(script)
 	defer scriptRef.Release()
 
@@ -36,24 +36,23 @@ func (ctx *Context) EvaluateScript(script string, obj *Object, source_url string
 		obj = ctx.NewEmptyObject()
 	}
 
-	exception := ctx.NewException()
-
 	log.Println("About to evaluate script:", script, obj, source_url, startingLineNumber)
 
+	errVal := ctx.newErrorValue()
 	ret := C.JSEvaluateScript(ctx.ref,
 		C.JSStringRef(unsafe.Pointer(scriptRef)), obj.ref,
-		C.JSStringRef(unsafe.Pointer(sourceRef)), C.int(startingLineNumber), &exception.val.ref)
+		C.JSStringRef(unsafe.Pointer(sourceRef)), C.int(startingLineNumber), &errVal.ref)
 	if ret == nil {
 		// An error occurred
 		// Error information should be stored in exception
-		return nil, exception
+		return nil, errVal
 	}
 
 	// Successful evaluation
 	return ctx.newValue(ret), nil
 }
 
-func (ctx *Context) CheckScriptSyntax(script string, source_url string, startingLineNumber int) *Exception {
+func (ctx *Context) CheckScriptSyntax(script string, source_url string, startingLineNumber int) error {
 	scriptRef := NewString(script)
 	defer scriptRef.Release()
 
@@ -63,15 +62,14 @@ func (ctx *Context) CheckScriptSyntax(script string, source_url string, starting
 		defer sourceRef.Release()
 	}
 
-	var exception = ctx.NewException()
-
+	errVal := ctx.newErrorValue()
 	ret := C.JSCheckScriptSyntax(ctx.ref,
 		C.JSStringRef(unsafe.Pointer(scriptRef)), C.JSStringRef(unsafe.Pointer(sourceRef)),
-		C.int(startingLineNumber), &exception.val.ref)
+		C.int(startingLineNumber), &errVal.ref)
 	if !ret {
 		// A syntax error was found
 		// exception should be non-nil
-		return exception
+		return errVal
 	}
 
 	// exception should be nil
