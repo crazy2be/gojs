@@ -7,13 +7,6 @@ package gojs
 // #include "callback.h"
 import "C"
 
-// TODO(sqs): remove
-type Error struct {
-	Name    string
-	Message string
-	Context *Context
-	Value   *Value
-}
 
 // NewError constructs a new JavaScript Error object with message.
 func (ctx *Context) NewError(message string) (*Object, error) {

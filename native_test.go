@@ -63,6 +63,31 @@ func checkArrsEqual(t *testing.T, vals []*Value, expectedVals []*Value) {
 	}
 }
 
+// t.Log doesn't print things immediately, this does if TESTING_DEBUG_LOG is set to true. Useful when you have pointer crashes and faults such as are common with cgo code.
+const TESTING_DEBUG_LOG = false
+
+func tlog(t *testing.T, v ...interface{}) {
+    if TESTING_DEBUG_LOG {
+        log.Println(v...)
+    } else {
+        t.Log(v...)
+    }
+    return
+}
+
+func terrf(t *testing.T, format string, v ...interface{}) {
+    if TESTING_DEBUG_LOG {
+        log.Printf(format, v...)
+        t.Fail()
+    } else {
+        t.Errorf(format, v...)
+    }
+}
+
+func init() {
+    log.SetFlags(log.Ltime | log.Lshortfile)
+}
+
 func TestNewCValueArray(t *testing.T) {
 	ctx := NewContext()
 	defer ctx.Release()
@@ -138,31 +163,6 @@ func TestNewFunctionWithCallback(t *testing.T) {
 		t.Errorf("Native function did not execute")
 	}
 	tlog(t, "Called as function.")
-}
-
-// t.Log doesn't print things immediately, this does if TESTING_DEBUG_LOG is set to true. Useful when you have pointer crashes and faults such as are common with cgo code.
-const TESTING_DEBUG_LOG = true
-
-func tlog(t *testing.T, v ...interface{}) {
-	if TESTING_DEBUG_LOG {
-		log.Println(v...)
-	} else {
-		t.Log(v...)
-	}
-	return
-}
-
-func terrf(t *testing.T, format string, v ...interface{}) {
-	if TESTING_DEBUG_LOG {
-		log.Printf(format, v...)
-		t.Fail()
-	} else {
-		t.Errorf(format, v...)
-	}
-}
-
-func init() {
-	log.SetFlags(log.Ltime | log.Lshortfile)
 }
 
 func TestNewFunctionWithCallback2(t *testing.T) {
