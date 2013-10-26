@@ -7,7 +7,6 @@ package gojs
 // #include "callback.h"
 import "C"
 
-
 // NewError constructs a new JavaScript Error object with message.
 func (ctx *Context) NewError(message string) (*Object, error) {
 	errVal := ctx.newErrorValue()

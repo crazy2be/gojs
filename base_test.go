@@ -20,7 +20,7 @@ var (
 		{"var obj = {}; obj", TypeObject, "[object Object]"},
 		{"var obj = function () { return 1;}; obj", TypeObject, "function () { return 1;}"},
 		{"function test() { return 1;}; test", TypeObject, "function test() { return 1;}"},
-    }
+	}
 )
 
 func TestBase(t *testing.T) {

@@ -67,25 +67,25 @@ func checkArrsEqual(t *testing.T, vals []*Value, expectedVals []*Value) {
 const TESTING_DEBUG_LOG = false
 
 func tlog(t *testing.T, v ...interface{}) {
-    if TESTING_DEBUG_LOG {
-        log.Println(v...)
-    } else {
-        t.Log(v...)
-    }
-    return
+	if TESTING_DEBUG_LOG {
+		log.Println(v...)
+	} else {
+		t.Log(v...)
+	}
+	return
 }
 
 func terrf(t *testing.T, format string, v ...interface{}) {
-    if TESTING_DEBUG_LOG {
-        log.Printf(format, v...)
-        t.Fail()
-    } else {
-        t.Errorf(format, v...)
-    }
+	if TESTING_DEBUG_LOG {
+		log.Printf(format, v...)
+		t.Fail()
+	} else {
+		t.Errorf(format, v...)
+	}
 }
 
 func init() {
-    log.SetFlags(log.Ltime | log.Lshortfile)
+	log.SetFlags(log.Ltime | log.Lshortfile)
 }
 
 func TestNewCValueArray(t *testing.T) {
