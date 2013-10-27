@@ -320,7 +320,7 @@ type PropertyNameArray struct {
 }
 
 func (ctx *Context) CopyPropertyNames(obj *Object) *PropertyNameArray {
-	ret := C.JSObjectCopyPropertyNames(ctx.ref, C.JSObjectRef(unsafe.Pointer(obj)))
+	ret := C.JSObjectCopyPropertyNames(ctx.ref, obj.ref)
 	return (*PropertyNameArray)(unsafe.Pointer(ret))
 }
 

@@ -3,3 +3,5 @@ _*
 *.o
 *.8
 8.out
+.kateproject.d
+*.kate-swp

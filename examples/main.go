@@ -54,12 +54,8 @@ func print_result(ctx *gojs.Context, script string) {
 	}
 }
 
-type dummy struct {
-}
-
-func (d dummy) Callback(ctx *gojs.Context, obj *gojs.Object, thisObject *gojs.Object, exception **gojs.Value) *gojs.Value {
+func callback(ctx *gojs.Context, obj *gojs.Object, thisObject *gojs.Object, arguments []*gojs.Value) *gojs.Value {
 	fmt.Printf("In callback!\n")
-	*exception = nil
 	return nil
 }
 
@@ -72,12 +68,12 @@ func main() {
 	fmt.Printf("%v %v\n", s.Length(), s.String())
 	fmt.Printf("%v %v\n", s.EqualToString("Hello"), s.EqualToString("Hello from go!"))
 
-	//obj := ctx.MakeFunction( "f", dummy{} )
-	//ctx.ObjectSetProperty( ctx.GlobalObject(), "f", obj.GetValue(), gojs.PropertyAttributeReadOnly )
-	//_, err := ctx.EvaluateScript( "f()", nil, "", 1 )
-	//if err!=nil {
-	//	panic(err)
-	//}
+	obj := ctx.NewFunctionWithCallback(gojs.GoFunctionCallback(callback))
+	ctx.SetProperty(ctx.GlobalObject(), "f", obj.ToValue(), gojs.PropertyAttributeReadOnly )
+	_, err := ctx.EvaluateScript( "f()", nil, "", 1 )
+	if err!=nil {
+		panic(err)
+	}
 
 	ctx.EvaluateScript("var a = \"Go!\"", nil, "", 1)
 	a, err := ctx.GetProperty(ctx.GlobalObject(), "a")
@@ -87,7 +83,7 @@ func main() {
 	print_result(ctx, "null")
 	print_result(ctx, "false")
 	print_result(ctx, "1234.123")
-	print_result(ctx, "new Array")
+	print_result(ctx, "new Array(1, 2, 3)")
 	print_result(ctx, "12+34\nreturn new 234 Array")
 	print_result(ctx, "1/0")
 
