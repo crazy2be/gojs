@@ -1,7 +1,7 @@
 package gojs
 
 // #include <stdlib.h>
-// #cgo pkg-config: webkit-1.0
+// #cgo pkg-config: javascriptcoregtk-3.0
 // #include <JavaScriptCore/JSBase.h>
 import "C"
 import (
