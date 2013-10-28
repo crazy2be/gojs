@@ -109,6 +109,12 @@ func (ctx *Context) newValue(ref C.JSValueRef) *Value {
 	return val
 }
 
+type RawValue C.JSValueRef
+
+func (ctx *Context) NewValueFrom(raw RawValue) *Value {
+	return ctx.newValue(C.JSValueRef(raw))
+}
+
 func (ctx *Context) NewUndefinedValue() *Value {
 	return ctx.newValue(C.JSValueMakeUndefined(ctx.ref))
 }
