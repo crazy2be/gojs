@@ -22,7 +22,7 @@ func NewString(value string) *String {
 	return (*String)(unsafe.Pointer(ref))
 }
 
-func NewStringFromRef(ref C.JSStringRef) *String {
+func newStringFromRef(ref C.JSStringRef) *String {
 	return (*String)(unsafe.Pointer(ref))
 }
 

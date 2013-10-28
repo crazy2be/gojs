@@ -18,16 +18,15 @@ func (ctx *Context) NewError(message string) (*Object, error) {
 	return ctx.newObject(ret), nil
 }
 
-func (ctx *Context) newErrorObjectOrValue(err error) C.JSValueRef {
-	errObj, err := ctx.NewError(err.Error())
-	if err == nil {
-		// Any JSObjectRef can be safely cast to a JSValueRef.
-		// https://lists.webkit.org/pipermail/webkit-dev/2009-May/007530.html
-		return C.JSValueRef(errObj.ref)
+func (ctx *Context) newErrorOrPanic(message string) C.JSValueRef {
+	obj, err := ctx.NewError(message)
+	if err != nil {
+		panic("newErrorOrPanic: " + err.Error())
 	}
-	// If we failed to construct a new Error, fall back to just using a
-	// string and hope it works. We might be out of memory.
-	return ctx.NewStringValue(err.Error()).ref
+
+	// Any JSObjectRef can be safely cast to a JSValueRef.
+	// https://lists.webkit.org/pipermail/webkit-dev/2009-May/007530.html
+	return C.JSValueRef(obj.ref)
 }
 
 type errorValue struct {

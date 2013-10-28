@@ -139,7 +139,7 @@ func (ctx *Context) ToString(ref *Value) (str string, err error) {
 		return "", errVal
 	}
 	defer C.JSStringRelease(ret)
-	return NewStringFromRef(ret).String(), nil
+	return newStringFromRef(ret).String(), nil
 }
 
 func (ctx *Context) ToStringOrDie(ref *Value) string {

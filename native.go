@@ -185,7 +185,7 @@ func (ctx *Context) jsValuesToReflect(param []*Value) []reflect.Value {
 	return ret
 }
 
-func javascriptToValue(field reflect.Value, ctx *Context, value *Value) (err error) {
+func setNativeFieldFromJSValue(field reflect.Value, ctx *Context, value *Value) (err error) {
 	switch field.Kind() {
 	case reflect.String:
 		var str string
@@ -422,7 +422,7 @@ func nativeobject_GetProperty_go(data_ptr, uctx, _, propertyName unsafe.Pointer,
 func nativeobject_SetProperty_go(data_ptr unsafe.Pointer, rawCtx C.JSContextRef, _, propertyName C.JSStringRef, value C.JSValueRef, exception *C.JSValueRef) C.char {
 	ctx := NewContextFrom(RawContext(rawCtx))
 	// Get name of property as a go string
-	name := NewStringFromRef(propertyName).String()
+	name := newStringFromRef(propertyName).String()
 
 	// Reconstruct the object interface
 	data := (*object_data)(data_ptr)
@@ -434,8 +434,8 @@ func nativeobject_SetProperty_go(data_ptr unsafe.Pointer, rawCtx C.JSContextRef,
 	}
 	struct_val := val
 	if struct_val.Kind() != reflect.Struct {
-		*exception = ctx.newErrorObjectOrValue(errors.New("object is not a Go struct"))
-		return 1 // TODO: why return 1?
+		*exception = ctx.newErrorOrPanic("object is not a Go struct")
+		return 0
 	}
 
 	field := struct_val.FieldByName(name)
@@ -443,9 +443,9 @@ func nativeobject_SetProperty_go(data_ptr unsafe.Pointer, rawCtx C.JSContextRef,
 		return 0
 	}
 
-	err := javascriptToValue(field, ctx, ctx.newValue(C.JSValueRef(value)))
+	err := setNativeFieldFromJSValue(field, ctx, ctx.newValue(C.JSValueRef(value)))
 	if err != nil {
-		*exception = ctx.newErrorObjectOrValue(err)
+		*exception = ctx.newErrorOrPanic(err.Error())
 		return 0
 	}
 	return 1
