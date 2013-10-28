@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/sqs/gojs"
+	"github.com/crazy2be/gojs"
 	"fmt"
 )
 
