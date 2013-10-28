@@ -53,3 +53,17 @@ func jsObjectToJSValue(obj *Object, err error) *Value {
 	}
 	return obj.ToValue()
 }
+
+func TestNewValueFrom(t *testing.T) {
+	ctx := NewContext()
+	defer ctx.Release()
+
+	wantString := "foo"
+	jsval := ctx.NewStringValue(wantString)
+	rawval := RawValue(jsval.ref)
+	jsval2 := ctx.NewValueFrom(rawval)
+
+	if gotString := ctx.ToStringOrDie(jsval2); wantString != gotString {
+		t.Errorf("want string %q, got %q", wantString, gotString)
+	}
+}
