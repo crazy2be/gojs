@@ -34,6 +34,17 @@ func (ctx *Context) NewEmptyObject() *Object {
 	return ctx.newObject(obj)
 }
 
+func (ctx *Context) NewObjectWithProperties(properties map[string]*Value) (*Object, error) {
+	obj := ctx.NewEmptyObject()
+	for name, val := range properties {
+		err := ctx.SetProperty(obj, name, val, 0)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return obj, nil
+}
+
 func (ctx *Context) NewArray(items []*Value) (*Object, error) {
 	errVal := ctx.newErrorValue()
 
@@ -242,16 +253,15 @@ func (obj *Object) SetPrivate(data unsafe.Pointer) bool {
 	return bool(ret)
 }
 
-// Does this work properly?
+// ToValue returns the JSValueRef wrapper for the object.
+//
+// Any JSObjectRef can be safely cast to a JSValueRef.
+// https://lists.webkit.org/pipermail/webkit-dev/2009-May/007530.html
 func (obj *Object) ToValue() *Value {
-	log.Println(obj)
-	log.Println("In ToValue() function...")
 	if obj == nil {
-		panic("ToValue() called on nil *Object!")
+		panic("Value() called on nil *Object!")
 	}
-	val := obj.ctx.newValue(C.JSValueRef(obj.ref))
-	log.Println("Converted to value!", val)
-	return val
+	return obj.ctx.newValue(C.JSValueRef(obj.ref))
 }
 
 func (ctx *Context) IsFunction(obj *Object) bool {

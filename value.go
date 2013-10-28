@@ -5,6 +5,7 @@ package gojs
 // #include <JavaScriptCore/JSValueRef.h>
 import "C"
 import (
+	"encoding/json"
 	"fmt"
 	"unsafe"
 )
@@ -31,7 +32,9 @@ func (val *Value) String() string {
 	return str
 }
 
-// GoVal converts a JavaScript value to a Go value.
+// GoVal converts a JavaScript value to a Go value. TODO(sqs): might it be
+// easier to just have JavaScriptCore serialize this to JSON and then
+// deserialize it in Go?
 func (v *Value) GoValue() (goval interface{}, err error) {
 	switch v.ctx.ValueType(v) {
 	case TypeUndefined, TypeNull:
@@ -42,6 +45,13 @@ func (v *Value) GoValue() (goval interface{}, err error) {
 		return v.ctx.ToNumber(v)
 	case TypeString:
 		return v.ctx.ToString(v)
+	case TypeObject:
+		jsonData, err := v.JSON()
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(jsonData, &goval)
+		return goval, err
 	}
 	return nil, fmt.Errorf("JS value type %d is not convertible to a Go value", v.ctx.ValueType(v))
 }
@@ -183,6 +193,17 @@ func (ctx *Context) ToObjectOrDie(ref *Value) *Object {
 		panic(err)
 	}
 	return ret
+}
+
+// JSON returns the JSON representation of the JavaScript value.
+func (v *Value) JSON() ([]byte, error) {
+	errVal := v.ctx.newErrorValue()
+	jsstr := C.JSValueCreateJSONString(v.ctx.ref, v.ref, 0, &errVal.ref)
+	if errVal.ref != nil {
+		return nil, errVal
+	}
+	defer C.JSStringRelease(jsstr)
+	return (*String)(unsafe.Pointer(jsstr)).Bytes(), nil
 }
 
 func (ctx *Context) ProtectValue(ref *Value) {

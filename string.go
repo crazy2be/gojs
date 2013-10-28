@@ -49,6 +49,21 @@ func (ref *String) String() string {
 	return ret
 }
 
+// Bytes returns a byte slice with the bytes of this string.
+func (ref *String) Bytes() []byte {
+	// Conversion 1, null-terminate UTF-8 string
+	len := C.JSStringGetMaximumUTF8CStringSize((C.JSStringRef)(unsafe.Pointer(ref)))
+	buffer := C.malloc(len)
+	if buffer == nil {
+		panic(syscall.ENOMEM)
+	}
+	defer C.free(buffer)
+	strlenWithNul := C.JSStringGetUTF8CString((C.JSStringRef)(unsafe.Pointer(ref)), (*C.char)(buffer), len)
+
+	// Conversion 2, Go []byte
+	return C.GoBytes(buffer, C.int(strlenWithNul-1))
+}
+
 func (ref *String) Length() uint32 {
 	ret := C.JSStringGetLength((C.JSStringRef)(unsafe.Pointer(ref)))
 	return uint32(ret)

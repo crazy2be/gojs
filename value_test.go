@@ -21,6 +21,18 @@ func TestValue_GoValue(t *testing.T) {
 		{ctx.NewNumberValue(-3.0), -3.0},
 		{ctx.NewStringValue(""), ""},
 		{ctx.NewStringValue("foo"), "foo"},
+		{ctx.NewEmptyObject().ToValue(), map[string]interface{}{}},
+		// TODO(sqs): convert JavaScript Date objects to Go time.Time (currently
+		// they are converted to a Go string)
+		// {jsObjectToJSValue(ctx.NewDateWithMilliseconds(123)), time.Unix(0, 123000000).In(time.UTC)},
+		{
+			jsObjectToJSValue(ctx.NewArray([]*Value{ctx.NewStringValue("foo")})),
+			[]interface{}{"foo"},
+		},
+		{
+			jsObjectToJSValue(ctx.NewObjectWithProperties(map[string]*Value{"foo": ctx.NewStringValue("bar")})),
+			map[string]interface{}{"foo": "bar"},
+		},
 	}
 
 	for _, test := range tests {
@@ -30,7 +42,14 @@ func TestValue_GoValue(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(test.wantGoValue, goValue) {
-			t.Errorf("JS value %q: want GoValue %+v, got %+v", test.jsValue, test.wantGoValue, goValue)
+			t.Errorf("JS value %q: want GoValue %+v (type %T), got %+v (type %T)", test.jsValue, test.wantGoValue, test.wantGoValue, goValue, goValue)
 		}
 	}
+}
+
+func jsObjectToJSValue(obj *Object, err error) *Value {
+	if err != nil {
+		panic("object creation failed: " + err.Error())
+	}
+	return obj.ToValue()
 }
