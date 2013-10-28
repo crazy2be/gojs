@@ -63,6 +63,31 @@ func checkArrsEqual(t *testing.T, vals []*Value, expectedVals []*Value) {
 	}
 }
 
+// t.Log doesn't print things immediately, this does if TESTING_DEBUG_LOG is set to true. Useful when you have pointer crashes and faults such as are common with cgo code.
+const TESTING_DEBUG_LOG = false
+
+func tlog(t *testing.T, v ...interface{}) {
+	if TESTING_DEBUG_LOG {
+		log.Println(v...)
+	} else {
+		t.Log(v...)
+	}
+	return
+}
+
+func terrf(t *testing.T, format string, v ...interface{}) {
+	if TESTING_DEBUG_LOG {
+		log.Printf(format, v...)
+		t.Fail()
+	} else {
+		t.Errorf(format, v...)
+	}
+}
+
+func init() {
+	log.SetFlags(log.Ltime | log.Lshortfile)
+}
+
 func TestNewCValueArray(t *testing.T) {
 	ctx := NewContext()
 	defer ctx.Release()
@@ -86,15 +111,15 @@ func TestNewCValueArray(t *testing.T) {
 	ptrs := unsafe.Sizeof(uintptr(0))
 	uptr := uintptr(unsafe.Pointer(cptr))
 	ptr0 := unsafe.Pointer(uptr + 0)
-	val0 := ctx.ptrToValue(ptr0)
+	val0 := ctx.ptrValue(ptr0)
 	ptr1 := unsafe.Pointer(uptr + (ptrs * 1))
-	val1 := ctx.ptrToValue(ptr1)
+	val1 := ctx.ptrValue(ptr1)
 	ptr2 := unsafe.Pointer(uptr + (ptrs * 2))
-	val2 := ctx.ptrToValue(ptr2)
+	val2 := ctx.ptrValue(ptr2)
 	ptr3 := unsafe.Pointer(uptr + (ptrs * 3))
-	val3 := ctx.ptrToValue(ptr3)
+	val3 := ctx.ptrValue(ptr3)
 	ptr4 := unsafe.Pointer(uptr + (ptrs * 4))
-	val4 := ctx.ptrToValue(ptr4)
+	val4 := ctx.ptrValue(ptr4)
 
 	checkExpected(t, val0, valstrs[0])
 	checkExpected(t, val1, valstrs[1])
@@ -138,31 +163,6 @@ func TestNewFunctionWithCallback(t *testing.T) {
 		t.Errorf("Native function did not execute")
 	}
 	tlog(t, "Called as function.")
-}
-
-// t.Log doesn't print things immediately, this does if TESTING_DEBUG_LOG is set to true. Useful when you have pointer crashes and faults such as are common with cgo code.
-const TESTING_DEBUG_LOG = true
-
-func tlog(t *testing.T, v ...interface{}) {
-	if TESTING_DEBUG_LOG {
-		log.Println(v...)
-	} else {
-		t.Log(v...)
-	}
-	return
-}
-
-func terrf(t *testing.T, format string, v ...interface{}) {
-	if TESTING_DEBUG_LOG {
-		log.Printf(format, v...)
-		t.Fail()
-	} else {
-		t.Errorf(format, v...)
-	}
-}
-
-func init() {
-	log.SetFlags(log.Ltime | log.Lshortfile)
 }
 
 func TestNewFunctionWithCallback2(t *testing.T) {
@@ -218,18 +218,19 @@ func TestNewFunctionWithCallbackPanic(t *testing.T) {
 		func(ctx *Context, obj *Object, thisObject *Object, _ []*Value) *Value {
 			panic("error from go!")
 			return nil
-		})
+		},
+	)
 	callbacks = append(callbacks,
 		func(ctx *Context, obj *Object, thisObject *Object, _ []*Value) *Value {
 			panic(syscall.ENOMEM)
 			return nil
-		})
+		},
+	)
 
 	ctx := NewContext()
 	defer ctx.Release()
 
 	for index, callback := range callbacks {
-
 		fn := ctx.NewFunctionWithCallback(callback)
 		if fn == nil {
 			t.Fatalf("ctx.NewFunctionWithCallback failed")
@@ -245,15 +246,13 @@ func TestNewFunctionWithCallbackPanic(t *testing.T) {
 		if val != nil {
 			t.Fatalf("ctx.NewFunctionWithCallback that panicked returned a value")
 		}
-		if err == nil || !ctx.IsObject(err.val) {
-			t.Fatalf("ctx.NewFunctionWithCallback that panicked did not set exception")
+		if err == nil {
+			t.Fatalf("want err != nil for function that panicked")
 		}
-		if ctx.ToStringOrDie(err.val) != "Error: "+error_msgs[index] {
-			t.Fatalf("ctx.NewFunctionWithCallback that panicked did not set exception message (%v,%v)",
-				ctx.ToStringOrDie(err.val), error_msgs[index])
+		if err.Error() != error_msgs[index] {
+			t.Fatalf("want exception message %q, got %q", err, error_msgs[index])
 		}
-
-	} // for
+	}
 }
 
 func TestNativeFunction(t *testing.T) {
@@ -303,11 +302,16 @@ func TestNativeFunction2(t *testing.T) {
 	args[1] = ctx.NewNumberValue(3.0)
 	val, err := ctx.CallAsFunction(fn, nil, args)
 	tlog(t, "Called as function")
-	if (err != nil && err.val != nil) || val == nil {
+	if err != nil || val == nil {
 		t.Errorf("Error executing native function (%v)", err)
 	}
-	if ctx.ToNumberOrDie(val) != 4.5 {
-		t.Errorf("Native function did not return the correct value")
+
+	wantNum := 4.5
+	gotNum, err := ctx.ToNumber(val)
+	if err != nil {
+		t.Error("ToNumber", err)
+	} else if wantNum != gotNum {
+		t.Errorf("want return value %v, got %v", wantNum, gotNum)
 	}
 }
 
@@ -331,8 +335,8 @@ func TestNativeFunction3(t *testing.T) {
 	a := ctx.NewNumberValue(1.5)
 	b := ctx.NewNumberValue(3.0)
 	val, err := ctx.CallAsFunction(fn, nil, []*Value{a, b})
-	if (err != nil && err.val != nil) || val == nil {
-		t.Errorf("Error executing native function (%v)", ctx.ToStringOrDie(err.val))
+	if err != nil || val == nil {
+		t.Errorf("Error executing native function (%v)", err)
 	}
 	if ctx.ToNumberOrDie(val) != 4.5 {
 		t.Errorf("Native function did not return the correct value")
@@ -363,11 +367,10 @@ func TestNativeFunctionPanic(t *testing.T) {
 			t.Fatalf("ctx.CallAsFunction did not panic as expected")
 		}
 		tlog(t, "About to convert to string!")
-		msg := ctx.ToStringOrDie(err.val)
-		if msg[0:7] != "Error: " {
-			t.Errorf("ctx.CallAsFunction did return expected error object (%v)", msg)
+		if err.Error() == "" {
+			t.Errorf("want non-empty error message, got %q", err)
 		} else {
-			t.Logf("ctx.CallAsFunction paniced as expected (%v)", msg)
+			t.Logf("ctx.CallAsFunction paniced as expected (%v)", err)
 		}
 
 	}
@@ -517,7 +520,7 @@ func TestNewNativeObjectMethod(t *testing.T) {
 
 	tlog(t, "Evaluated Script")
 	if err != nil {
-		t.Errorf("ctx.EvaluateScript returned an error: %#v", *err)
+		t.Errorf("ctx.EvaluateScript returned an error: %#v", err)
 		return
 	}
 	tlog(t, "No error")

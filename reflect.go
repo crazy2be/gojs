@@ -1,15 +1,13 @@
 package gojs
 
-// #include <stdlib.h>
-import "C"
 import "reflect"
 
-func (ctx *Context) NewValue(value interface{}) *Value {
+// NewValue returns a JavaScript value corresponding to a Go value.
+func (ctx *Context) NewValue(goValue interface{}) *Value {
 	// Handle simple case right off
-	if value == nil {
+	if goValue == nil {
 		return ctx.NewNullValue()
 	}
 
-	ret := ctx.reflectToJSValue(reflect.ValueOf(value))
-	return ret
+	return ctx.reflectToJSValue(reflect.ValueOf(goValue))
 }

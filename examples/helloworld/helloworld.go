@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/crazy2be/gojs"
+	"github.com/sqs/gojs"
 )
 
 func main() {
@@ -12,7 +12,7 @@ func main() {
 	ret, err := ctx.EvaluateScript("['hello', 'world'].join(' ')", nil, ".", 0)
 
 	if err != nil {
-		fmt.Println("Script had an error :(", err.String())
+		fmt.Println("Script had an error :(", err)
 		return
 	}
 

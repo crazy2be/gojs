@@ -22,6 +22,10 @@ func NewString(value string) *String {
 	return (*String)(unsafe.Pointer(ref))
 }
 
+func newStringFromRef(ref C.JSStringRef) *String {
+	return (*String)(unsafe.Pointer(ref))
+}
+
 func (ref *String) Retain() {
 	C.JSStringRetain((C.JSStringRef)(unsafe.Pointer(ref)))
 }
@@ -43,6 +47,21 @@ func (ref *String) String() string {
 	// Conversion 2, Go string
 	ret := C.GoString((*C.char)(buffer))
 	return ret
+}
+
+// Bytes returns a byte slice with the bytes of this string.
+func (ref *String) Bytes() []byte {
+	// Conversion 1, null-terminate UTF-8 string
+	len := C.JSStringGetMaximumUTF8CStringSize((C.JSStringRef)(unsafe.Pointer(ref)))
+	buffer := C.malloc(len)
+	if buffer == nil {
+		panic(syscall.ENOMEM)
+	}
+	defer C.free(buffer)
+	strlenWithNul := C.JSStringGetUTF8CString((C.JSStringRef)(unsafe.Pointer(ref)), (*C.char)(buffer), len)
+
+	// Conversion 2, Go []byte
+	return C.GoBytes(buffer, C.int(strlenWithNul-1))
 }
 
 func (ref *String) Length() uint32 {

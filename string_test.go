@@ -1,6 +1,7 @@
 package gojs
 
 import (
+	"bytes"
 	"testing"
 )
 
@@ -31,6 +32,19 @@ func TestStringString(t *testing.T) {
 		}
 		if str.Length() != uint32(len([]rune(item))) {
 			t.Errorf("str.Length() returned \"%v\", expected \"%v\"", str.Length(), len([]rune(item)))
+		}
+	}
+}
+
+func TestStringBytes(t *testing.T) {
+	for _, item := range strtests {
+		str := NewString(item)
+		defer str.Release()
+
+		wantBytes := []byte(item)
+		gotBytes := str.Bytes()
+		if !bytes.Equal(wantBytes, gotBytes) {
+			t.Errorf("%q: want Bytes %q, got %q", item, wantBytes, gotBytes)
 		}
 	}
 }
