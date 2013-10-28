@@ -39,6 +39,15 @@ func (ctx *Context) newErrorValue() *errorValue {
 }
 
 // Error returns a string describing the exception. If r.ref is nil, it panics.
+//
+// This is because if r.ref is nil, then errorValue is being used improperly.
+// It's intended to be used as an argument to functions that take a
+// *C.JSValueRef and set the pointer if there is an error. If it's used as such,
+// and r.ref is nil, then the function that received this errorValue's
+// *C.JSValueRef did not return an error. To determine whether an error
+// occurred, the programmer must check whether this errorValue's ref field is
+// nil, NOT whether a pointer to this errorValue is nil. This function panics
+// instead of returning, say, an empty error string, to prevent this misuse.
 func (r errorValue) Error() string {
 	if r.ref == nil {
 		panic("errorValue.ref is nil")
