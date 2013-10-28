@@ -5,6 +5,7 @@ package gojs
 // #include <JavaScriptCore/JSValueRef.h>
 import "C"
 import (
+	"fmt"
 	"unsafe"
 )
 
@@ -28,6 +29,21 @@ func (val *Value) String() string {
 		return "Error:" + err.Error()
 	}
 	return str
+}
+
+// GoVal converts a JavaScript value to a Go value.
+func (v *Value) GoValue() (goval interface{}, err error) {
+	switch v.ctx.ValueType(v) {
+	case TypeUndefined, TypeNull:
+		return nil, nil
+	case TypeBoolean:
+		return v.ctx.ToBoolean(v), nil
+	case TypeNumber:
+		return v.ctx.ToNumber(v)
+	case TypeString:
+		return v.ctx.ToString(v)
+	}
+	return nil, fmt.Errorf("JS value type %d is not convertible to a Go value", v.ctx.ValueType(v))
 }
 
 func (ctx *Context) ValueType(v *Value) uint8 {
