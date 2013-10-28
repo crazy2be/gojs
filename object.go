@@ -259,7 +259,7 @@ func (obj *Object) SetPrivate(data unsafe.Pointer) bool {
 // https://lists.webkit.org/pipermail/webkit-dev/2009-May/007530.html
 func (obj *Object) ToValue() *Value {
 	if obj == nil {
-		panic("Value() called on nil *Object!")
+		panic("ToValue() called on nil *Object!")
 	}
 	return obj.ctx.newValue(C.JSValueRef(obj.ref))
 }
