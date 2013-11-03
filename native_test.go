@@ -383,7 +383,7 @@ func TestNewNativeObject(t *testing.T) {
 	defer ctx.Release()
 
 	v := ctx.NewNativeObject(obj)
-	ctx.SetProperty(ctx.GlobalObject(), "n", v.ToValue(), 0)
+	ctx.GlobalObject().SetProperty("n", v.ToValue(), 0)
 
 	// Following script access should be successful
 	ret, err := ctx.EvaluateScript("n.F", nil, "./testing.go", 1)
@@ -438,7 +438,7 @@ func TestNewNativeObjectSet(t *testing.T) {
 
 	tlog(t, "Setting property n")
 
-	ctx.SetProperty(ctx.GlobalObject(), "n", v.ToValue(), 0)
+	ctx.GlobalObject().SetProperty("n", v.ToValue(), 0)
 
 	tlog(t, "Creating value for property I")
 
@@ -446,7 +446,7 @@ func TestNewNativeObjectSet(t *testing.T) {
 	i := ctx.NewNumberValue(-2)
 	tlog(t, "Setting property I", i)
 	tlog(t, ctx.ToStringOrDie(i))
-	ctx.SetProperty(v, "I", i, 0)
+	v.SetProperty("I", i, 0)
 	tlog(t, "Set property I, checking for errors.")
 	if obj.I != -2 {
 		t.Errorf("ctx.SetProperty did not set integer field correctly")
@@ -456,7 +456,7 @@ func TestNewNativeObjectSet(t *testing.T) {
 
 	// Set the unsigned integer property
 	u := ctx.NewNumberValue(3)
-	ctx.SetProperty(v, "U", u, 0)
+	v.SetProperty("U", u, 0)
 	if obj.U != 3 {
 		t.Fatalf("ctx.SetProperty did not set unsigned integer field correctly")
 	}
@@ -466,7 +466,7 @@ func TestNewNativeObjectSet(t *testing.T) {
 	// Set the unsigned integer property
 	u = ctx.NewNumberValue(-3)
 	tlog(t, "Setting property U to invalid value")
-	err := ctx.SetProperty(v, "U", u, 0)
+	err := v.SetProperty("U", u, 0)
 	tlog(t, "Set property, checking for correctness...")
 	if err == nil {
 		t.Errorf("ctx.SetProperty did not set unsigned integer field correctly: No error was returned")
@@ -479,13 +479,13 @@ func TestNewNativeObjectSet(t *testing.T) {
 
 	// Set the float property
 	n := ctx.NewNumberValue(4.0)
-	ctx.SetProperty(v, "F", n, 0)
+	v.SetProperty("F", n, 0)
 	if obj.F != 4.0 {
 		t.Errorf("ctx.SetProperty did not set float field correctly")
 	}
 
 	s := ctx.NewStringValue("five")
-	ctx.SetProperty(v, "S", s, 0)
+	v.SetProperty("S", s, 0)
 	if obj.S != "five" {
 		t.Errorf("ctx.SetProperty did not set string field correctly")
 	}
@@ -511,7 +511,7 @@ func TestNewNativeObjectMethod(t *testing.T) {
 	defer ctx.Release()
 
 	v := ctx.NewNativeObject(obj)
-	ctx.SetProperty(ctx.GlobalObject(), "n", v.ToValue(), 0)
+	ctx.GlobalObject().SetProperty("n", v.ToValue(), 0)
 
 	tlog(t, "Testing n.Add()")
 

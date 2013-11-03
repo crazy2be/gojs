@@ -37,7 +37,7 @@ func (ctx *Context) NewEmptyObject() *Object {
 func (ctx *Context) NewObjectWithProperties(properties map[string]*Value) (*Object, error) {
 	obj := ctx.NewEmptyObject()
 	for name, val := range properties {
-		err := ctx.SetProperty(obj, name, val, 0)
+		err := obj.SetProperty(name, val, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -159,55 +159,55 @@ func (ctx *Context) NewFunction(name string, parameters []string, body string, s
 	return ctx.newObject(ret), nil
 }
 
-func (ctx *Context) GetPrototype(obj *Object) *Value {
-	ret := C.JSObjectGetPrototype(ctx.ref, obj.ref)
-	return ctx.newValue(ret)
+func (obj *Object) GetPrototype() *Value {
+	ret := C.JSObjectGetPrototype(obj.ctx.ref, obj.ref)
+	return obj.ctx.newValue(ret)
 }
 
-func (ctx *Context) SetPrototype(obj *Object, rhs *Value) {
-	C.JSObjectSetPrototype(ctx.ref, obj.ref, rhs.ref)
+func (obj *Object) SetPrototype(rhs *Value) {
+	C.JSObjectSetPrototype(obj.ctx.ref, obj.ref, rhs.ref)
 }
 
-func (ctx *Context) HasProperty(obj *Object, name string) bool {
+func (obj *Object) HasProperty(name string) bool {
 	jsstr := NewString(name)
 	defer jsstr.Release()
 
-	ret := C.JSObjectHasProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)))
+	ret := C.JSObjectHasProperty(obj.ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)))
 	return bool(ret)
 }
 
-func (ctx *Context) GetProperty(obj *Object, name string) (*Value, error) {
+func (obj *Object) GetProperty(name string) (*Value, error) {
 	jsstr := NewString(name)
 	defer jsstr.Release()
 
-	errVal := ctx.newErrorValue()
+	errVal := obj.ctx.newErrorValue()
 
-	ret := C.JSObjectGetProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), &errVal.ref)
+	ret := C.JSObjectGetProperty(obj.ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), &errVal.ref)
 	if errVal.ref != nil {
 		return nil, errVal
 	}
 
-	return ctx.newValue(ret), nil
+	return obj.ctx.newValue(ret), nil
 }
 
-func (ctx *Context) GetPropertyAtIndex(obj *Object, index uint16) (*Value, error) {
-	errVal := ctx.newErrorValue()
+func (obj *Object) GetPropertyAtIndex(index uint16) (*Value, error) {
+	errVal := obj.ctx.newErrorValue()
 
-	ret := C.JSObjectGetPropertyAtIndex(ctx.ref, obj.ref, C.unsigned(index), &errVal.ref)
+	ret := C.JSObjectGetPropertyAtIndex(obj.ctx.ref, obj.ref, C.unsigned(index), &errVal.ref)
 	if errVal.ref != nil {
 		return nil, errVal
 	}
 
-	return ctx.newValue(ret), nil
+	return obj.ctx.newValue(ret), nil
 }
 
-func (ctx *Context) SetProperty(obj *Object, name string, rhs *Value, attributes uint8) error {
+func (obj *Object) SetProperty(name string, rhs *Value, attributes uint8) error {
 	jsstr := NewString(name)
 	defer jsstr.Release()
 
-	errVal := ctx.newErrorValue()
+	errVal := obj.ctx.newErrorValue()
 
-	C.JSObjectSetProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), rhs.ref,
+	C.JSObjectSetProperty(obj.ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), rhs.ref,
 		(C.JSPropertyAttributes)(attributes), &errVal.ref)
 	if errVal.ref != nil {
 		return errVal
@@ -216,10 +216,10 @@ func (ctx *Context) SetProperty(obj *Object, name string, rhs *Value, attributes
 	return nil
 }
 
-func (ctx *Context) SetPropertyAtIndex(obj *Object, index uint16, rhs *Value) error {
-	errVal := ctx.newErrorValue()
+func (obj *Object) SetPropertyAtIndex(index uint16, rhs *Value) error {
+	errVal := obj.ctx.newErrorValue()
 
-	C.JSObjectSetPropertyAtIndex(ctx.ref, obj.ref, C.unsigned(index), rhs.ref, &errVal.ref)
+	C.JSObjectSetPropertyAtIndex(obj.ctx.ref, obj.ref, C.unsigned(index), rhs.ref, &errVal.ref)
 	if errVal.ref != nil {
 		return errVal
 	}
@@ -227,30 +227,18 @@ func (ctx *Context) SetPropertyAtIndex(obj *Object, index uint16, rhs *Value) er
 	return nil
 }
 
-func (ctx *Context) DeleteProperty(obj *Object, name string) (bool, error) {
+func (obj *Object) DeleteProperty(name string) (bool, error) {
 	jsstr := NewString(name)
 	defer jsstr.Release()
 
-	errVal := ctx.newErrorValue()
+	errVal := obj.ctx.newErrorValue()
 
-	ret := C.JSObjectDeleteProperty(ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), &errVal.ref)
+	ret := C.JSObjectDeleteProperty(obj.ctx.ref, obj.ref, C.JSStringRef(unsafe.Pointer(jsstr)), &errVal.ref)
 	if errVal.ref != nil {
 		return false, errVal
 	}
 
 	return bool(ret), nil
-}
-
-// Should NOT be public. WTF.
-func (obj *Object) GetPrivate() unsafe.Pointer {
-	ret := C.JSObjectGetPrivate(obj.ref)
-	return ret
-}
-
-// Should NOT be public. WTF.
-func (obj *Object) SetPrivate(data unsafe.Pointer) bool {
-	ret := C.JSObjectSetPrivate(obj.ref, data)
-	return bool(ret)
 }
 
 // ToValue returns the JSValueRef wrapper for the object.

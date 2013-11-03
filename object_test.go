@@ -51,7 +51,7 @@ func TestNewArray2(t *testing.T) {
 	if !ctx.IsObject(val.ToValue()) {
 		t.Fatalf("ctx.NewArray failed to return an object (%v)", ctx.ValueType(val.ToValue()))
 	}
-	prop, err := ctx.GetProperty(val, "length")
+	prop, err := val.GetProperty("length")
 	if err != nil || prop == nil {
 		t.Fatalf("ctx.NewArray returned object without 'length' property")
 	} else {
@@ -123,7 +123,7 @@ func TestNewError(t *testing.T) {
 		if err != nil {
 			t.Errorf("ctx.NewError failed on string %v with error %v", item, err)
 		}
-		v, exc := ctx.GetProperty(r, "name")
+		v, exc := r.GetProperty("name")
 		if exc != nil || v == nil {
 			t.Errorf("ctx.NewError returned object without 'message' property")
 		} else {
@@ -134,7 +134,7 @@ func TestNewError(t *testing.T) {
 				t.Errorf("JavaScript error object and input string don't match (%v, %v)", item, ctx.ToStringOrDie(v))
 			}
 		}
-		v, exc = ctx.GetProperty(r, "message")
+		v, exc = r.GetProperty("message")
 		if exc != nil || v == nil {
 			t.Errorf("ctx.NewError returned object without 'message' property")
 		} else {
