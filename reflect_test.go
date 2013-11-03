@@ -9,10 +9,10 @@ func TestNewValueWithNil(t *testing.T) {
 	defer ctx.Release()
 
 	val := ctx.NewValue(nil)
-	if ctx.ValueType(val) != TypeNull {
+	if val.Type() != TypeNull {
 		t.Errorf("ctx.ValueType did not return TypeNull")
 	}
-	if !ctx.IsNull(val) {
+	if !val.IsNull() {
 		t.Errorf("ctx.IsNull did not return true")
 	}
 }
@@ -22,13 +22,13 @@ func TestNewValueWithInt(t *testing.T) {
 	defer ctx.Release()
 
 	val := ctx.NewValue(int(4))
-	if ctx.ValueType(val) != TypeNumber {
+	if val.Type() != TypeNumber {
 		t.Errorf("ctx.ValueType did not return TypeNumber")
 	}
-	if !ctx.IsNumber(val) {
+	if !val.IsNumber() {
 		t.Errorf("ctx.IsNumber did not return true")
 	}
-	if ctx.ToNumberOrDie(val) != 4 {
+	if val.ToNumberOrDie() != 4 {
 		t.Errorf("ctx.ToNumberOrDie did not return correct value")
 	}
 }
@@ -38,13 +38,13 @@ func TestNewValueWithUint(t *testing.T) {
 	defer ctx.Release()
 
 	val := ctx.NewValue(uint(4))
-	if ctx.ValueType(val) != TypeNumber {
+	if val.Type() != TypeNumber {
 		t.Errorf("ctx.ValueType did not return TypeNumber")
 	}
-	if !ctx.IsNumber(val) {
+	if !val.IsNumber() {
 		t.Errorf("ctx.IsNumber did not return true")
 	}
-	if ctx.ToNumberOrDie(val) != 4 {
+	if val.ToNumberOrDie() != 4 {
 		t.Errorf("ctx.ToNumberOrDie did not return correct value")
 	}
 }
@@ -54,13 +54,13 @@ func TestNewValueWithFloat(t *testing.T) {
 	defer ctx.Release()
 
 	val := ctx.NewValue(4.5)
-	if ctx.ValueType(val) != TypeNumber {
+	if val.Type() != TypeNumber {
 		t.Errorf("ctx.ValueType did not return TypeNumber")
 	}
-	if !ctx.IsNumber(val) {
+	if !val.IsNumber() {
 		t.Errorf("ctx.IsNumber did not return true")
 	}
-	if ctx.ToNumberOrDie(val) != 4.5 {
+	if val.ToNumberOrDie() != 4.5 {
 		t.Errorf("ctx.ToNumberOrDie did not return correct value")
 	}
 }
@@ -70,13 +70,13 @@ func TestNewValueWithString(t *testing.T) {
 	defer ctx.Release()
 
 	val := ctx.NewValue("Some text.")
-	if ctx.ValueType(val) != TypeString {
+	if val.Type() != TypeString {
 		t.Errorf("ctx.ValueType did not return TypeString")
 	}
-	if !ctx.IsString(val) {
+	if !val.IsString() {
 		t.Errorf("ctx.IsString did not return true")
 	}
-	if ctx.ToStringOrDie(val) != "Some text." {
+	if val.ToStringOrDie() != "Some text." {
 		t.Errorf("ctx.ToStringOrDie did not return correct value")
 	}
 }
@@ -86,21 +86,21 @@ func TestNewValueWithFunc(t *testing.T) {
 	defer ctx.Release()
 
 	val := ctx.NewValue(func() int { return 1 })
-	if ctx.ValueType(val) != TypeObject {
+	if val.Type() != TypeObject {
 		t.Errorf("ctx.ValueType did not return TypeObject")
 	}
-	if !ctx.IsObject(val) {
+	if !val.IsObject() {
 		t.Errorf("ctx.IsObject did not return true")
 	}
-	if !ctx.IsFunction(ctx.ToObjectOrDie(val)) {
+	if !ctx.IsFunction(val.ToObjectOrDie()) {
 		t.Errorf("ctx.IsFunction did not return true")
 	}
 
-	val2, err := ctx.CallAsFunction(ctx.ToObjectOrDie(val), nil, nil)
+	val2, err := ctx.CallAsFunction(val.ToObjectOrDie(), nil, nil)
 	if err != nil || val2 == nil {
 		t.Errorf("Error executing native function (%v)", err)
 	}
-	if ctx.ToNumberOrDie(val2) != 1 {
+	if val2.ToNumberOrDie() != 1 {
 		t.Errorf("Native function did not return the correct value")
 	}
 }
@@ -112,10 +112,10 @@ func TestNewValueWithObject(t *testing.T) {
 	obj := &reflect_object{-1, 2, 3.5, "four"}
 
 	val := ctx.NewValue(obj)
-	if ctx.ValueType(val) != TypeObject {
+	if val.Type() != TypeObject {
 		t.Errorf("ctx.ValueType did not return TypeObject")
 	}
-	if !ctx.IsObject(val) {
+	if !val.IsObject() {
 		t.Errorf("ctx.IsObject did not return true")
 	}
 }

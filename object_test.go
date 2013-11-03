@@ -12,8 +12,8 @@ func TestNewObject(t *testing.T) {
 	if val == nil {
 		t.Errorf("ctx.NewObject returned a nil poitner")
 	}
-	if !ctx.IsObject(val.ToValue()) {
-		t.Errorf("ctx.NewObject failed to return an object (%v)", ctx.ValueType(val.ToValue()))
+	if !val.ToValue().IsObject() {
+		t.Errorf("ctx.NewObject failed to return an object (%v)", val.ToValue().Type)
 	}
 }
 
@@ -29,8 +29,8 @@ func TestNewArray(t *testing.T) {
 	if val == nil {
 		t.Fatalf("ctx.NewArray returned a nil poitner")
 	}
-	if !ctx.IsObject(val.ToValue()) {
-		t.Fatalf("ctx.NewArray failed to return an object (%v)", ctx.ValueType(val.ToValue()))
+	if !val.ToValue().IsObject() {
+		t.Fatalf("ctx.NewArray failed to return an object (%v)", val.ToValue().Type())
 	}
 }
 
@@ -48,18 +48,18 @@ func TestNewArray2(t *testing.T) {
 	if val == nil {
 		t.Fatalf("ctx.NewArray returned a nil poitner")
 	}
-	if !ctx.IsObject(val.ToValue()) {
-		t.Fatalf("ctx.NewArray failed to return an object (%v)", ctx.ValueType(val.ToValue()))
+	if !val.ToValue().IsObject() {
+		t.Fatalf("ctx.NewArray failed to return an object (%v)", val.ToValue().Type())
 	}
 	prop, err := val.GetProperty("length")
 	if err != nil || prop == nil {
 		t.Fatalf("ctx.NewArray returned object without 'length' property")
 	} else {
-		if !ctx.IsNumber(prop) {
+		if !prop.IsNumber() {
 			t.Errorf("ctx.NewArray return object with 'length' property not a number")
 		}
-		if ctx.ToNumberOrDie(prop) != 2 {
-			t.Errorf("ctx.NewArray return object with 'length' not equal to 2", ctx.ToNumberOrDie(prop))
+		if prop.ToNumberOrDie() != 2 {
+			t.Errorf("ctx.NewArray return object with 'length' not equal to 2", prop.ToNumberOrDie())
 		}
 	}
 }
@@ -75,8 +75,8 @@ func TestNewDate(t *testing.T) {
 	if val == nil {
 		t.Fatalf("ctx.NewDate returned a nil poitner")
 	}
-	if !ctx.IsObject(val.ToValue()) {
-		t.Fatalf("ctx.NewDate failed to return an object (%v)", ctx.ValueType(val.ToValue()))
+	if !val.ToValue().IsObject() {
+		t.Fatalf("ctx.NewDate failed to return an object (%v)", val.ToValue().Type())
 	}
 }
 
@@ -91,8 +91,8 @@ func TestNewDateWithMilliseconds(t *testing.T) {
 	if val == nil {
 		t.Errorf("ctx.NewDateWithMilliseconds returned a nil poitner")
 	}
-	if !ctx.IsObject(val.ToValue()) {
-		t.Errorf("ctx.NewDateWithMilliseconds failed to return an object (%v)", ctx.ValueType(val.ToValue()))
+	if !val.ToValue().IsObject() {
+		t.Errorf("ctx.NewDateWithMilliseconds failed to return an object (%v)", val.ToValue().Type())
 	}
 }
 
@@ -107,8 +107,8 @@ func TestNewDateWithString(t *testing.T) {
 	if val == nil {
 		t.Errorf("ctx.NewDateWithString returned a nil poitner")
 	}
-	if !ctx.IsObject(val.ToValue()) {
-		t.Errorf("ctx.NewDateWithString failed to return an object (%v)", ctx.ValueType(val.ToValue()))
+	if !val.ToValue().IsObject() {
+		t.Errorf("ctx.NewDateWithString failed to return an object (%v)", val.ToValue().Type())
 	}
 }
 
@@ -127,22 +127,22 @@ func TestNewError(t *testing.T) {
 		if exc != nil || v == nil {
 			t.Errorf("ctx.NewError returned object without 'message' property")
 		} else {
-			if !ctx.IsString(v) {
+			if !v.IsString() {
 				t.Errorf("ctx.NewError return object with 'message' property not a string")
 			}
-			if ctx.ToStringOrDie(v) != "Error" {
-				t.Errorf("JavaScript error object and input string don't match (%v, %v)", item, ctx.ToStringOrDie(v))
+			if v.ToStringOrDie() != "Error" {
+				t.Errorf("JavaScript error object and input string don't match (%v, %v)", item, v.ToStringOrDie())
 			}
 		}
 		v, exc = r.GetProperty("message")
 		if exc != nil || v == nil {
 			t.Errorf("ctx.NewError returned object without 'message' property")
 		} else {
-			if !ctx.IsString(v) {
+			if !v.IsString() {
 				t.Errorf("ctx.NewError return object with 'message' property not a string")
 			}
-			if ctx.ToStringOrDie(v) != item {
-				t.Errorf("JavaScript error object and input string don't match (%v, %v)", item, ctx.ToStringOrDie(v))
+			if v.ToStringOrDie() != item {
+				t.Errorf("JavaScript error object and input string don't match (%v, %v)", item, v.ToStringOrDie())
 			}
 		}
 	}
@@ -159,7 +159,7 @@ func TestNewRegExp(t *testing.T) {
 		if err != nil {
 			t.Errorf("ctx.NewRegExp failed on string %v with error %v", item, err)
 		}
-		if ctx.ToStringOrDie(r.ToValue()) != "/"+item+"/" {
+		if r.ToValue().ToStringOrDie() != "/"+item+"/" {
 			t.Errorf("Error compling regexp %s", item)
 		}
 	}
@@ -177,7 +177,7 @@ func TestNewRegExpFromValues(t *testing.T) {
 		if err != nil {
 			t.Errorf("ctx.NewRegExp failed on string %v with error %v", item, err)
 		}
-		if ctx.ToStringOrDie(r.ToValue()) != "/"+item+"/" {
+		if r.ToValue().ToStringOrDie() != "/"+item+"/" {
 			t.Errorf("Error compling regexp %s", item)
 		}
 	}
@@ -211,11 +211,11 @@ func TestNewCallAsFunction(t *testing.T) {
 	if err != nil {
 		t.Errorf("ctx.CallAsFunction failed with %v", err)
 	}
-	if !ctx.IsNumber(val) {
+	if !val.IsNumber() {
 		t.Errorf("ctx.CallAsFunction did not compute the right value")
 	}
 
-	num := ctx.ToNumberOrDie(val)
+	num := val.ToNumberOrDie()
 	if num != 4.5 {
 		t.Errorf("ctx.CallAsFunction did not compute the right value")
 	}

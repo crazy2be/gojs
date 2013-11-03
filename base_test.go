@@ -36,30 +36,28 @@ func TestEvaluateScript(t *testing.T) {
 		tlog(t, "On item", item, "index", index)
 		ret, err := ctx.EvaluateScript(item.script, nil, "./testing.go", 1)
 		tlog(t, "Evaluated Script")
-		if item.result != "" {
-			if err != nil {
-				t.Errorf("ctx.EvaluateScript raised an error (script %v)", index)
-			} else if ret == nil {
-				t.Errorf("ctx.EvaluateScript failed to return a result (script %v)", index)
-			} else {
-				tlog(t, "No error, and there was a return result.")
-				tlog(t, "Type of value is", ctx.ValueType(ret))
-				valuetype := ctx.ValueType(ret)
-				if valuetype != item.valuetype {
-					terrf(t, "ctx.EvaluateScript did not return the expected type (%v instead of %v).", valuetype, item.valuetype)
-				}
-				stringval := ctx.ToStringOrDie(ret)
-				if stringval != item.result {
-					terrf(t, "ctx.EvaluateScript returned an incorrect value (%v instead of %v).", stringval, item.result)
-				}
-			}
-		} else {
+		if item.result == "" {
 			// Script has a syntax error
 			if err == nil {
 				t.Errorf("ctx.EvaluateScript did not raise an error on an invalid script")
 			}
 			if ret != nil {
 				t.Errorf("ctx.EvaluateScript returned a result on an invalid script")
+			}
+		} else if err != nil {
+			t.Errorf("ctx.EvaluateScript raised an error (script %v)", index)
+		} else if ret == nil {
+			t.Errorf("ctx.EvaluateScript failed to return a result (script %v)", index)
+		} else {
+			tlog(t, "No error, and there was a return result.")
+			tlog(t, "Type of value is", ret.Type())
+			valuetype := ret.Type()
+			if valuetype != item.valuetype {
+				terrf(t, "ctx.EvaluateScript did not return the expected type (%v instead of %v).", valuetype, item.valuetype)
+			}
+			stringval := ret.ToStringOrDie()
+			if stringval != item.result {
+				terrf(t, "ctx.EvaluateScript returned an incorrect value (%v instead of %v).", stringval, item.result)
 			}
 		}
 	}

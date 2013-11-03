@@ -7,6 +7,31 @@ import (
 	"unsafe"
 )
 
+// t.Log doesn't print things immediately, this does if TESTING_DEBUG_LOG is set to true. Useful when you have pointer crashes and faults such as are common with cgo code.
+const TESTING_DEBUG_LOG = false
+
+func tlog(t *testing.T, v ...interface{}) {
+	if TESTING_DEBUG_LOG {
+		log.Println(v...)
+	} else {
+		t.Log(v...)
+	}
+	return
+}
+
+func terrf(t *testing.T, format string, v ...interface{}) {
+	if TESTING_DEBUG_LOG {
+		log.Printf(format, v...)
+		t.Fail()
+	} else {
+		t.Errorf(format, v...)
+	}
+}
+
+func init() {
+	log.SetFlags(log.Ltime | log.Lshortfile)
+}
+
 type reflect_object struct {
 	I int
 	U uint
@@ -42,12 +67,12 @@ func PrettyPrintValArr(t *testing.T, values []*Value) {
 
 func ValArrToStrings(t *testing.T, values []*Value) {
 	for _, val := range values {
-		tlog(t, val.ctx.ToStringOrDie(val))
+		tlog(t, val.ToStringOrDie())
 	}
 }
 
 func checkExpected(t *testing.T, val *Value, str string) {
-	str2 := val.ctx.ToStringOrDie(val)
+	str2 := val.ToStringOrDie()
 	if str2 != str {
 		t.Fatalf("Got %s, expected %s", str2, str)
 	}
@@ -55,37 +80,12 @@ func checkExpected(t *testing.T, val *Value, str string) {
 
 func checkArrsEqual(t *testing.T, vals []*Value, expectedVals []*Value) {
 	for i, _ := range vals {
-		valstr := vals[i].ctx.ToStringOrDie(vals[i])
-		expvalstr := expectedVals[i].ctx.ToStringOrDie(expectedVals[i])
+		valstr := vals[i].ToStringOrDie()
+		expvalstr := expectedVals[i].ToStringOrDie()
 		if valstr != expvalstr {
 			t.Fatalf("Got %s, expected %s", valstr, expvalstr)
 		}
 	}
-}
-
-// t.Log doesn't print things immediately, this does if TESTING_DEBUG_LOG is set to true. Useful when you have pointer crashes and faults such as are common with cgo code.
-const TESTING_DEBUG_LOG = false
-
-func tlog(t *testing.T, v ...interface{}) {
-	if TESTING_DEBUG_LOG {
-		log.Println(v...)
-	} else {
-		t.Log(v...)
-	}
-	return
-}
-
-func terrf(t *testing.T, format string, v ...interface{}) {
-	if TESTING_DEBUG_LOG {
-		log.Printf(format, v...)
-		t.Fail()
-	} else {
-		t.Errorf(format, v...)
-	}
-}
-
-func init() {
-	log.SetFlags(log.Ltime | log.Lshortfile)
 }
 
 func TestNewCValueArray(t *testing.T) {
@@ -153,7 +153,7 @@ func TestNewFunctionWithCallback(t *testing.T) {
 		t.Errorf("ctx.NewFunctionWithCallback returned value that is not a function")
 	}
 	tlog(t, "Function is a callback function")
-	if ctx.ToStringOrDie(fn.ToValue()) != "nativecallback" {
+	if fn.ToValue().ToStringOrDie() != "nativecallback" {
 		t.Errorf("ctx.NewFunctionWithCallback returned value that does not convert to property string")
 	}
 	tlog(t, "Successfully converted to property string")
@@ -179,10 +179,10 @@ func TestNewFunctionWithCallback2(t *testing.T) {
 		//a, err := args[0].ctx.ToNumber(args[0])
 		//tlog(t, a, err)
 		//return ctx.NewNumberValue(2)
-		a, err := ctx.ToNumber(args[0])
+		a, err := args[0].ToNumber()
 		tlog(t, err)
 		tlog(t, "Converted first arg...")
-		b := ctx.ToNumberOrDie(args[1])
+		b := args[1].ToNumberOrDie()
 		return ctx.NewNumberValue(a + b)
 		return ctx.NewNumberValue(1)
 		return ctx.newValue(nil)
@@ -205,7 +205,7 @@ func TestNewFunctionWithCallback2(t *testing.T) {
 	if err != nil || val == nil {
 		t.Fatalf("Error executing native callback")
 	}
-	if ctx.ToNumberOrDie(val) != 4.5 {
+	if val.ToNumberOrDie() != 4.5 {
 		t.Fatalf("Native callback did not return the correct value")
 	}
 }
@@ -239,7 +239,7 @@ func TestNewFunctionWithCallbackPanic(t *testing.T) {
 		if !ctx.IsFunction(fn) {
 			t.Fatalf("ctx.NewFunctionWithCallback returned value that is not a function")
 		}
-		if ctx.ToStringOrDie(fn.ToValue()) != "nativecallback" {
+		if fn.ToValue().ToStringOrDie() != "nativecallback" {
 			t.Fatalf("ctx.NewFunctionWithCallback returned value that does not convert to property string")
 		}
 		val, err := ctx.CallAsFunction(fn, nil, nil)
@@ -272,7 +272,7 @@ func TestNativeFunction(t *testing.T) {
 	if !ctx.IsFunction(fn) {
 		t.Errorf("ctx.NewFunctionWithNative returned value that is not a function")
 	}
-	if ctx.ToStringOrDie(fn.ToValue()) != "nativefunction" {
+	if fn.ToValue().ToStringOrDie() != "nativefunction" {
 		t.Errorf("ctx.nativefunction returned value that does not convert to property string")
 	}
 	ctx.CallAsFunction(fn, nil, nil)
@@ -307,7 +307,7 @@ func TestNativeFunction2(t *testing.T) {
 	}
 
 	wantNum := 4.5
-	gotNum, err := ctx.ToNumber(val)
+	gotNum, err := val.ToNumber()
 	if err != nil {
 		t.Error("ToNumber", err)
 	} else if wantNum != gotNum {
@@ -338,7 +338,7 @@ func TestNativeFunction3(t *testing.T) {
 	if err != nil || val == nil {
 		t.Errorf("Error executing native function (%v)", err)
 	}
-	if ctx.ToNumberOrDie(val) != 4.5 {
+	if val.ToNumberOrDie() != 4.5 {
 		t.Errorf("Native function did not return the correct value")
 	}
 }
@@ -395,10 +395,10 @@ func TestNewNativeObject(t *testing.T) {
 		t.Errorf("ctx.EvaluateScript did not return a result (no error specified)!")
 		return
 	}
-	if !ctx.IsNumber(ret) {
+	if !ret.IsNumber() {
 		t.Errorf("ctx.EvaluateScript did not return 'number' result when accessing native object's non-existent field.")
 	}
-	num := ctx.ToNumberOrDie(ret)
+	num := ret.ToNumberOrDie()
 	if num != 3.0 {
 		t.Errorf("ctx.EvaluateScript incorrect value when accessing native object's field.")
 	}
@@ -408,7 +408,7 @@ func TestNewNativeObject(t *testing.T) {
 	if err != nil || ret == nil {
 		t.Errorf("ctx.EvaluateScript returned an error (or did not return a result)")
 	}
-	if !ctx.IsUndefined(ret) {
+	if !ret.IsUndefined() {
 		t.Errorf("ctx.EvaluateScript did not return 'undefined' result when accessing native object's non-existent field.")
 	}
 
@@ -417,10 +417,10 @@ func TestNewNativeObject(t *testing.T) {
 	if err != nil || ret == nil {
 		t.Errorf("ctx.EvaluateScript returned an error (or did not return a result)")
 	}
-	if !ctx.IsString(ret) {
+	if !ret.IsString() {
 		t.Errorf("ctx.EvaluateScript did not return 'string' result when accessing native object's non-existent field.")
 	}
-	str := ctx.ToStringOrDie(ret)
+	str := ret.ToStringOrDie()
 	if str != "four" {
 		t.Errorf("ctx.EvaluateScript incorrect value when accessing native object's field.")
 	}
@@ -445,7 +445,7 @@ func TestNewNativeObjectSet(t *testing.T) {
 	// Set the integer property
 	i := ctx.NewNumberValue(-2)
 	tlog(t, "Setting property I", i)
-	tlog(t, ctx.ToStringOrDie(i))
+	tlog(t, i.ToStringOrDie())
 	v.SetProperty("I", i, 0)
 	tlog(t, "Set property I, checking for errors.")
 	if obj.I != -2 {
@@ -499,7 +499,7 @@ func TestNewNativeObjectConvert(t *testing.T) {
 
 	v := ctx.NewNativeObject(obj)
 
-	if ctx.ToStringOrDie(v.ToValue()) != "four" {
+	if v.ToValue().ToStringOrDie() != "four" {
 		t.Errorf("ctx.ToStringOrDie for native object did not return correct value.")
 	}
 }
@@ -529,11 +529,11 @@ func TestNewNativeObjectMethod(t *testing.T) {
 		return
 	}
 	tlog(t, "Result was returned")
-	if !ctx.IsNumber(ret) {
+	if !ret.IsNumber() {
 		t.Errorf("ctx.EvaluateScript did not return 'number' result when calling method 'Add'.")
 	}
 	tlog(t, "sucessfully checked that value was a number")
-	num := ctx.ToNumberOrDie(ret)
+	num := ret.ToNumberOrDie()
 	if num != 2.0 {
 		t.Errorf("ctx.EvaluateScript incorrect value when accessing native object's field.")
 	}
@@ -546,10 +546,10 @@ func TestNewNativeObjectMethod(t *testing.T) {
 		t.Errorf("ctx.EvaluateScript returned an error (or did not return a result)")
 		return
 	}
-	if !ctx.IsNumber(ret) {
+	if !ret.IsNumber() {
 		t.Errorf("ctx.EvaluateScript did not return 'number' result when calling method 'AddWith'.")
 	}
-	num = ctx.ToNumberOrDie(ret)
+	num = ret.ToNumberOrDie()
 	if num != 2.5 {
 		t.Errorf("ctx.EvaluateScript incorrect value when accessing native object's field.")
 	}
@@ -560,7 +560,7 @@ func TestNewNativeObjectMethod(t *testing.T) {
 		t.Errorf("ctx.EvaluateScript returned an error (or did not return a result)")
 		return
 	}
-	if !ctx.IsObject(ret) {
+	if !ret.IsObject() {
 		t.Errorf("ctx.EvaluateScript did not return 'object' result when calling method 'Self'.")
 	}
 
@@ -571,7 +571,7 @@ func TestNewNativeObjectMethod(t *testing.T) {
 		t.Logf("Error:  %s", err)
 		return
 	}
-	if !ctx.IsNull(ret) {
+	if !ret.IsNull() {
 		t.Errorf("ctx.EvaluateScript 'n.Null()'did not return a javascript null value.")
 	}
 }

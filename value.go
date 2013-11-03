@@ -24,81 +24,6 @@ const (
 	TypeObject    = iota
 )
 
-func (val *Value) String() string {
-	str, err := val.ctx.ToString(val)
-	if err != nil {
-		return "Error:" + err.Error()
-	}
-	return str
-}
-
-// GoVal converts a JavaScript value to a Go value. TODO(sqs): might it be
-// easier to just have JavaScriptCore serialize this to JSON and then
-// deserialize it in Go?
-func (v *Value) GoValue() (goval interface{}, err error) {
-	switch v.ctx.ValueType(v) {
-	case TypeUndefined, TypeNull:
-		return nil, nil
-	case TypeBoolean:
-		return v.ctx.ToBoolean(v), nil
-	case TypeNumber:
-		return v.ctx.ToNumber(v)
-	case TypeString:
-		return v.ctx.ToString(v)
-	case TypeObject:
-		jsonData, err := v.JSON()
-		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal(jsonData, &goval)
-		return goval, err
-	}
-	return nil, fmt.Errorf("JS value type %d is not convertible to a Go value", v.ctx.ValueType(v))
-}
-
-func (ctx *Context) ValueType(v *Value) uint8 {
-	return uint8(C.JSValueGetType(ctx.ref, v.ref))
-}
-
-func (ctx *Context) IsUndefined(v *Value) bool {
-	return bool(C.JSValueIsUndefined(ctx.ref, v.ref))
-}
-
-func (ctx *Context) IsNull(v *Value) bool {
-	return bool(C.JSValueIsNull(ctx.ref, v.ref))
-}
-
-func (ctx *Context) IsBoolean(v *Value) bool {
-	return bool(C.JSValueIsBoolean(ctx.ref, v.ref))
-}
-
-func (ctx *Context) IsNumber(v *Value) bool {
-	return bool(C.JSValueIsNumber(ctx.ref, v.ref))
-}
-
-func (ctx *Context) IsString(v *Value) bool {
-	return bool(C.JSValueIsString(ctx.ref, v.ref))
-}
-
-func (ctx *Context) IsObject(v *Value) bool {
-	ret := C.JSValueIsObject(ctx.ref, v.ref)
-	return bool(ret)
-}
-
-func (ctx *Context) IsEqual(a *Value, b *Value) (bool, error) {
-	errVal := ctx.newErrorValue()
-	ret := C.JSValueIsEqual(ctx.ref, a.ref, b.ref, &errVal.ref)
-	if errVal.ref != nil {
-		return false, errVal
-	}
-
-	return bool(ret), nil
-}
-
-func (ctx *Context) IsStrictEqual(a *Value, b *Value) bool {
-	return bool(C.JSValueIsStrictEqual(ctx.ref, a.ref, b.ref))
-}
-
 func (ctx *Context) newValue(ref C.JSValueRef) *Value {
 	if ref == nil {
 		return nil
@@ -140,14 +65,88 @@ func (ctx *Context) NewStringValue(value string) *Value {
 	return ctx.newValue(ref)
 }
 
-// TODO: Move to Value struct
-func (ctx *Context) ToBoolean(ref *Value) bool {
-	return bool(C.JSValueToBoolean(ctx.ref, ref.ref))
+func (val *Value) String() string {
+	str, err := val.ToString()
+	if err != nil {
+		return "Error:" + err.Error()
+	}
+	return str
 }
 
-func (ctx *Context) ToNumber(ref *Value) (num float64, err error) {
-	errVal := ctx.newErrorValue()
-	ret := C.JSValueToNumber(ctx.ref, ref.ref, &errVal.ref)
+// GoVal converts a JavaScript value to a Go value. TODO(sqs): might it be
+// easier to just have JavaScriptCore serialize this to JSON and then
+// deserialize it in Go?
+func (v *Value) GoValue() (goval interface{}, err error) {
+	switch v.Type() {
+	case TypeUndefined, TypeNull:
+		return nil, nil
+	case TypeBoolean:
+		return v.ToBoolean(), nil
+	case TypeNumber:
+		return v.ToNumber()
+	case TypeString:
+		return v.ToString()
+	case TypeObject:
+		jsonData, err := v.ToJSON()
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(jsonData, &goval)
+		return goval, err
+	}
+	return nil, fmt.Errorf("JS value type %d is not convertible to a Go value", v.Type())
+}
+
+func (v *Value) Type() uint8 {
+	return uint8(C.JSValueGetType(v.ctx.ref, v.ref))
+}
+
+func (v *Value) IsUndefined() bool {
+	return bool(C.JSValueIsUndefined(v.ctx.ref, v.ref))
+}
+
+func (v *Value) IsNull() bool {
+	return bool(C.JSValueIsNull(v.ctx.ref, v.ref))
+}
+
+func (v *Value) IsBoolean() bool {
+	return bool(C.JSValueIsBoolean(v.ctx.ref, v.ref))
+}
+
+func (v *Value) IsNumber() bool {
+	return bool(C.JSValueIsNumber(v.ctx.ref, v.ref))
+}
+
+func (v *Value) IsString() bool {
+	return bool(C.JSValueIsString(v.ctx.ref, v.ref))
+}
+
+func (v *Value) IsObject() bool {
+	return bool(C.JSValueIsObject(v.ctx.ref, v.ref))
+}
+
+func (v *Value) Equals(b *Value) bool {
+	return bool(C.JSValueIsStrictEqual(v.ctx.ref, v.ref, b.ref))
+}
+
+// JavaScript ==
+func (v *Value) LooseEquals(b *Value) (bool, error) {
+	errVal := v.ctx.newErrorValue()
+	ret := C.JSValueIsEqual(v.ctx.ref, v.ref, b.ref, &errVal.ref)
+	if errVal.ref != nil {
+		return false, errVal
+	}
+
+	return bool(ret), nil
+}
+
+func (v *Value) ToBoolean() bool {
+	return bool(C.JSValueToBoolean(v.ctx.ref, v.ref))
+}
+
+func (v *Value) ToNumber() (num float64, err error) {
+	errVal := v.ctx.newErrorValue()
+	ret := C.JSValueToNumber(v.ctx.ref, v.ref, &errVal.ref)
 	if errVal.ref != nil {
 		return float64(ret), errVal
 	}
@@ -156,17 +155,18 @@ func (ctx *Context) ToNumber(ref *Value) (num float64, err error) {
 	return float64(ret), nil
 }
 
-func (ctx *Context) ToNumberOrDie(ref *Value) float64 {
-	ret, err := ctx.ToNumber(ref)
+// TODO(crazy2be): Should this return NaN instead of panicing?
+func (v *Value) ToNumberOrDie() float64 {
+	ret, err := v.ToNumber()
 	if err != nil {
 		panic(err)
 	}
 	return ret
 }
 
-func (ctx *Context) ToString(ref *Value) (str string, err error) {
-	errVal := ctx.newErrorValue()
-	ret := C.JSValueToStringCopy(ctx.ref, ref.ref, &errVal.ref)
+func (v *Value) ToString() (str string, err error) {
+	errVal := v.ctx.newErrorValue()
+	ret := C.JSValueToStringCopy(v.ctx.ref, v.ref, &errVal.ref)
 	if errVal.ref != nil {
 		return "", errVal
 	}
@@ -174,27 +174,25 @@ func (ctx *Context) ToString(ref *Value) (str string, err error) {
 	return newStringFromRef(ret).String(), nil
 }
 
-func (ctx *Context) ToStringOrDie(ref *Value) string {
-	str, err := ctx.ToString(ref)
+func (v *Value) ToStringOrDie() string {
+	str, err := v.ToString()
 	if err != nil {
 		panic(err)
 	}
 	return str
 }
 
-func (ctx *Context) ToObject(ref *Value) (*Object, error) {
-	errVal := ctx.newErrorValue()
-	ret := C.JSValueToObject(ctx.ref, ref.ref, &errVal.ref)
+func (v *Value) ToObject() (*Object, error) {
+	errVal := v.ctx.newErrorValue()
+	ret := C.JSValueToObject(v.ctx.ref, v.ref, &errVal.ref)
 	if errVal.ref != nil {
 		return nil, errVal
 	}
-
-	// Successful conversion
-	return ctx.newObject(ret), nil
+	return v.ctx.newObject(ret), nil
 }
 
-func (ctx *Context) ToObjectOrDie(ref *Value) *Object {
-	ret, err := ctx.ToObject(ref)
+func (v *Value) ToObjectOrDie() *Object {
+	ret, err := v.ToObject()
 	if err != nil {
 		panic(err)
 	}
@@ -202,7 +200,7 @@ func (ctx *Context) ToObjectOrDie(ref *Value) *Object {
 }
 
 // JSON returns the JSON representation of the JavaScript value.
-func (v *Value) JSON() ([]byte, error) {
+func (v *Value) ToJSON() ([]byte, error) {
 	errVal := v.ctx.newErrorValue()
 	jsstr := C.JSValueCreateJSONString(v.ctx.ref, v.ref, 0, &errVal.ref)
 	if errVal.ref != nil {
@@ -212,10 +210,10 @@ func (v *Value) JSON() ([]byte, error) {
 	return (*String)(unsafe.Pointer(jsstr)).Bytes(), nil
 }
 
-func (ctx *Context) ProtectValue(ref *Value) {
-	C.JSValueProtect(ctx.ref, ref.ref)
+func (v *Value) Protect() {
+	C.JSValueProtect(v.ctx.ref, v.ref)
 }
 
-func (ctx *Context) UnProtectValue(ref *Value) {
-	C.JSValueProtect(ctx.ref, ref.ref)
+func (v *Value) UnProtect() {
+	C.JSValueProtect(v.ctx.ref, v.ref)
 }

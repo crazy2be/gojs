@@ -168,13 +168,13 @@ func (ctx *Context) jsValuesToReflect(param []*Value) []reflect.Value {
 		var goval interface{}
 		log.Println(index, item)
 
-		switch ctx.ValueType(item) {
+		switch item.Type() {
 		case TypeBoolean:
-			goval = ctx.ToBoolean(item)
+			goval = item.ToBoolean()
 		case TypeNumber:
-			goval = ctx.ToNumberOrDie(item)
+			goval = item.ToNumberOrDie()
 		case TypeString:
-			goval = ctx.ToStringOrDie(item)
+			goval = item.ToStringOrDie()
 		default:
 			panic("Parameter can not be converted to Go native type.")
 		}
@@ -189,7 +189,7 @@ func setNativeFieldFromJSValue(field reflect.Value, ctx *Context, value *Value) 
 	switch field.Kind() {
 	case reflect.String:
 		var str string
-		str, err = ctx.ToString(value)
+		str, err = value.ToString()
 		if err == nil {
 			field.SetString(str)
 		} else {
@@ -198,7 +198,7 @@ func setNativeFieldFromJSValue(field reflect.Value, ctx *Context, value *Value) 
 
 	case reflect.Float32, reflect.Float64:
 		var flt float64
-		flt, err = ctx.ToNumber(value)
+		flt, err = value.ToNumber()
 		if err == nil {
 			field.SetFloat(flt)
 		} else {
@@ -207,7 +207,7 @@ func setNativeFieldFromJSValue(field reflect.Value, ctx *Context, value *Value) 
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		var flt float64
-		flt, err = ctx.ToNumber(value)
+		flt, err = value.ToNumber()
 		if err == nil {
 			field.SetInt(int64(flt))
 		} else {
@@ -217,7 +217,7 @@ func setNativeFieldFromJSValue(field reflect.Value, ctx *Context, value *Value) 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		log.Println("Dealing with uint type of some sort...")
 		var flt float64
-		flt, err = ctx.ToNumber(value)
+		flt, err = value.ToNumber()
 		log.Println("Got value!")
 		if err != nil {
 			return
