@@ -252,42 +252,41 @@ func (obj *Object) ToValue() *Value {
 	return obj.ctx.newValue(C.JSValueRef(obj.ref))
 }
 
-func (ctx *Context) IsFunction(obj *Object) bool {
-	ret := C.JSObjectIsFunction(ctx.ref, obj.ref)
-	return bool(ret)
+func (obj *Object) IsFunction() bool {
+	return bool(C.JSObjectIsFunction(obj.ctx.ref, obj.ref))
 }
 
-func (ctx *Context) CallAsFunction(obj *Object, thisObject *Object, parameters []*Value) (*Value, error) {
-	errVal := ctx.newErrorValue()
-	cParameters, n := ctx.newCValueArray(parameters)
+func (obj *Object) CallAsFunction(thisObject *Object, parameters []*Value) (*Value, error) {
+	errVal := obj.ctx.newErrorValue()
+	cParameters, n := obj.ctx.newCValueArray(parameters)
 	if thisObject == nil {
-		thisObject = ctx.newObject(nil)
+		thisObject = obj.ctx.newObject(nil)
 		log.Println(thisObject.ref)
 	}
 
-	ret := C.JSObjectCallAsFunction(ctx.ref, obj.ref, thisObject.ref, n, cParameters, &errVal.ref)
+	ret := C.JSObjectCallAsFunction(obj.ctx.ref, obj.ref, thisObject.ref, n, cParameters, &errVal.ref)
 
 	if errVal.ref != nil {
 		return nil, errVal
 	}
 
-	return ctx.newValue(ret), nil
+	return obj.ctx.newValue(ret), nil
 }
 
-func (ctx *Context) IsConstructor(obj *Object) bool {
-	ret := C.JSObjectIsConstructor(ctx.ref, obj.ref)
-	return bool(ret)
+func (obj *Object) IsConstructor() bool {
+	return bool(C.JSObjectIsConstructor(obj.ctx.ref, obj.ref))
 }
 
-func (ctx *Context) CallAsConstructor(obj *Object, parameters []*Value) (*Value, error) {
-	errVal := ctx.newErrorValue()
+func (obj *Object) CallAsConstructor(parameters []*Value) (*Value, error) {
+	errVal := obj.ctx.newErrorValue()
 
 	var Cparameters *C.JSValueRef
 	if len(parameters) > 0 {
+		// TODO: Is this safe?
 		Cparameters = (*C.JSValueRef)(unsafe.Pointer(&parameters[0]))
 	}
 
-	ret := C.JSObjectCallAsConstructor(ctx.ref, obj.ref,
+	ret := C.JSObjectCallAsConstructor(obj.ctx.ref, obj.ref,
 		C.size_t(len(parameters)),
 		Cparameters,
 		&errVal.ref)
@@ -295,7 +294,7 @@ func (ctx *Context) CallAsConstructor(obj *Object, parameters []*Value) (*Value,
 		return nil, errVal
 	}
 
-	return ctx.newObject(ret).ToValue(), nil
+	return obj.ctx.newObject(ret).ToValue(), nil
 }
 
 //=========================================================
@@ -317,8 +316,8 @@ const (
 type PropertyNameArray struct {
 }
 
-func (ctx *Context) CopyPropertyNames(obj *Object) *PropertyNameArray {
-	ret := C.JSObjectCopyPropertyNames(ctx.ref, obj.ref)
+func (obj *Object) CopyPropertyNames() *PropertyNameArray {
+	ret := C.JSObjectCopyPropertyNames(obj.ctx.ref, obj.ref)
 	return (*PropertyNameArray)(unsafe.Pointer(ret))
 }
 

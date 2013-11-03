@@ -92,11 +92,11 @@ func TestNewValueWithFunc(t *testing.T) {
 	if !val.IsObject() {
 		t.Errorf("ctx.IsObject did not return true")
 	}
-	if !ctx.IsFunction(val.ToObjectOrDie()) {
+	if !val.ToObjectOrDie().IsFunction() {
 		t.Errorf("ctx.IsFunction did not return true")
 	}
 
-	val2, err := ctx.CallAsFunction(val.ToObjectOrDie(), nil, nil)
+	val2, err := val.ToObjectOrDie().CallAsFunction(nil, nil)
 	if err != nil || val2 == nil {
 		t.Errorf("Error executing native function (%v)", err)
 	}

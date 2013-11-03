@@ -191,7 +191,7 @@ func TestNewFunction(t *testing.T) {
 	if err != nil {
 		t.Errorf("ctx.NewFunction failed with %v", err)
 	}
-	if !ctx.IsFunction(fn) {
+	if !fn.IsFunction() {
 		t.Errorf("ctx.NewFunction did not return a function object")
 	}
 }
@@ -207,7 +207,7 @@ func TestNewCallAsFunction(t *testing.T) {
 
 	a := ctx.NewNumberValue(1.5)
 	b := ctx.NewNumberValue(3.0)
-	val, err := ctx.CallAsFunction(fn, nil, []*Value{a, b})
+	val, err := fn.CallAsFunction(nil, []*Value{a, b})
 	if err != nil {
 		t.Errorf("ctx.CallAsFunction failed with %v", err)
 	}

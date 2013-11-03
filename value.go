@@ -65,8 +65,8 @@ func (ctx *Context) NewStringValue(value string) *Value {
 	return ctx.newValue(ref)
 }
 
-func (val *Value) String() string {
-	str, err := val.ToString()
+func (v *Value) String() string {
+	str, err := v.ToString()
 	if err != nil {
 		return "Error:" + err.Error()
 	}

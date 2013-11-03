@@ -149,7 +149,7 @@ func TestNewFunctionWithCallback(t *testing.T) {
 		return
 	}
 	tlog(t, "Made new function with callback")
-	if !ctx.IsFunction(fn) {
+	if !fn.IsFunction() {
 		t.Errorf("ctx.NewFunctionWithCallback returned value that is not a function")
 	}
 	tlog(t, "Function is a callback function")
@@ -158,7 +158,7 @@ func TestNewFunctionWithCallback(t *testing.T) {
 	}
 	tlog(t, "Successfully converted to property string")
 	tlog(t, "Calling as function...")
-	ctx.CallAsFunction(fn, nil, []*Value{})
+	fn.CallAsFunction(nil, []*Value{})
 	if !flag {
 		t.Errorf("Native function did not execute")
 	}
@@ -199,7 +199,7 @@ func TestNewFunctionWithCallback2(t *testing.T) {
 	numarr[0] = ctx.NewNumberValue(1.5)
 	numarr[1] = ctx.NewNumberValue(3.0)
 	tlog(t, "Calling callback as function")
-	val, err := ctx.CallAsFunction(fn, nil, numarr)
+	val, err := fn.CallAsFunction(nil, numarr)
 	tlog(t, "Called callback as function!")
 	tlog(t, err, val)
 	if err != nil || val == nil {
@@ -236,13 +236,13 @@ func TestNewFunctionWithCallbackPanic(t *testing.T) {
 			t.Fatalf("ctx.NewFunctionWithCallback failed")
 			return
 		}
-		if !ctx.IsFunction(fn) {
+		if !fn.IsFunction() {
 			t.Fatalf("ctx.NewFunctionWithCallback returned value that is not a function")
 		}
 		if fn.ToValue().ToStringOrDie() != "nativecallback" {
 			t.Fatalf("ctx.NewFunctionWithCallback returned value that does not convert to property string")
 		}
-		val, err := ctx.CallAsFunction(fn, nil, nil)
+		val, err := fn.CallAsFunction(nil, nil)
 		if val != nil {
 			t.Fatalf("ctx.NewFunctionWithCallback that panicked returned a value")
 		}
@@ -269,13 +269,13 @@ func TestNativeFunction(t *testing.T) {
 		t.Errorf("ctx.NewFunctionWithNative failed")
 		return
 	}
-	if !ctx.IsFunction(fn) {
+	if !fn.IsFunction() {
 		t.Errorf("ctx.NewFunctionWithNative returned value that is not a function")
 	}
 	if fn.ToValue().ToStringOrDie() != "nativefunction" {
 		t.Errorf("ctx.nativefunction returned value that does not convert to property string")
 	}
-	ctx.CallAsFunction(fn, nil, nil)
+	fn.CallAsFunction(nil, nil)
 	if !flag {
 		t.Errorf("Native function did not execute")
 	}
@@ -294,13 +294,13 @@ func TestNativeFunction2(t *testing.T) {
 		t.Errorf("ctx.NewFunctionWithNative failed")
 		return
 	}
-	if !ctx.IsFunction(fn) {
+	if !fn.IsFunction() {
 		t.Errorf("ctx.NewFunctionWithNative returned value that is not a function")
 	}
 	args := make([]*Value, 2)
 	args[0] = ctx.NewNumberValue(1.5)
 	args[1] = ctx.NewNumberValue(3.0)
-	val, err := ctx.CallAsFunction(fn, nil, args)
+	val, err := fn.CallAsFunction(nil, args)
 	tlog(t, "Called as function")
 	if err != nil || val == nil {
 		t.Errorf("Error executing native function (%v)", err)
@@ -329,12 +329,12 @@ func TestNativeFunction3(t *testing.T) {
 		t.Errorf("ctx.NewFunctionWithNative failed")
 		return
 	}
-	if !ctx.IsFunction(fn) {
+	if !fn.IsFunction() {
 		t.Errorf("ctx.NewFunctionWithNative returned value that is not a function")
 	}
 	a := ctx.NewNumberValue(1.5)
 	b := ctx.NewNumberValue(3.0)
-	val, err := ctx.CallAsFunction(fn, nil, []*Value{a, b})
+	val, err := fn.CallAsFunction(nil, []*Value{a, b})
 	if err != nil || val == nil {
 		t.Errorf("Error executing native function (%v)", err)
 	}
@@ -357,10 +357,10 @@ func TestNativeFunctionPanic(t *testing.T) {
 			t.Errorf("ctx.NewFunctionWithNative failed")
 			return
 		}
-		if !ctx.IsFunction(fn) {
+		if !fn.IsFunction() {
 			t.Errorf("ctx.NewFunctionWithNative returned value that is not a function")
 		}
-		val, err := ctx.CallAsFunction(fn, nil, nil)
+		val, err := fn.CallAsFunction(nil, nil)
 		tlog(t, "Called as function")
 		tlog(t, val, err)
 		if err == nil || val != nil {
