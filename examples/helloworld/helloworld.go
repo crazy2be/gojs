@@ -21,7 +21,7 @@ func main() {
 		return
 	}
 
-	retstr := ctx.ToStringOrDie(ret)
+	retstr := ret.ToStringOrDie()
 
 	fmt.Println(retstr)
 }

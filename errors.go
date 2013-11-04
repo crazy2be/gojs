@@ -53,5 +53,5 @@ func (r errorValue) Error() string {
 		panic("errorValue.ref is nil")
 	}
 	v := r.ctx.newValue(r.ref)
-	return r.ctx.ToStringOrDie(v)
+	return v.ToStringOrDie()
 }

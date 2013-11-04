@@ -63,7 +63,7 @@ func TestNewValueFrom(t *testing.T) {
 	rawval := RawValue(jsval.ref)
 	jsval2 := ctx.NewValueFrom(rawval)
 
-	if gotString := ctx.ToStringOrDie(jsval2); wantString != gotString {
+	if gotString := jsval2.ToStringOrDie(); wantString != gotString {
 		t.Errorf("want string %q, got %q", wantString, gotString)
 	}
 }

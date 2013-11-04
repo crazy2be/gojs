@@ -8,32 +8,32 @@ import (
 const source_url = "./test.js"
 
 func print_properties(ctx *gojs.Context, tab_count int, value *gojs.Object) {
-	names := ctx.CopyPropertyNames(value)
+	names := value.CopyPropertyNames()
 	for lp := uint16(0); lp < names.Count(); lp++ {
 		name := names.NameAtIndex(lp)
-		value, _ := ctx.GetProperty(value, name)
+		value, _ := value.GetProperty(name)
 		fmt.Printf("%s = ", name)
 		print_value_ref(ctx, value)
 	}
 }
 
 func print_value_ref(ctx *gojs.Context, value *gojs.Value) {
-	switch t := ctx.ValueType(value); true {
+	switch t := value.Type(); true {
 	case t == gojs.TypeUndefined:
 		fmt.Printf("Undefined\n")
 	case t == gojs.TypeNull:
 		fmt.Printf("Null\n")
 	case t == gojs.TypeBoolean:
-		fmt.Printf("%v\n", ctx.ToBoolean(value))
+		fmt.Printf("%v\n", value.ToBoolean())
 	case t == gojs.TypeNumber:
-		v, _ := ctx.ToNumber(value)
+		v, _ := value.ToNumber()
 		fmt.Printf("%v\n", v)
 	case t == gojs.TypeString:
-		v, _ := ctx.ToString(value)
+		v, _ := value.ToString()
 		fmt.Printf("%v\n", v)
 	case t == gojs.TypeObject:
 		fmt.Printf("{\n")
-		print_properties(ctx, 1, ctx.ToObjectOrDie(value))
+		print_properties(ctx, 1, value.ToObjectOrDie())
 		fmt.Printf("}\n")
 	default:
 		panic(fmt.Sprintf("Unknown type for value %v", value))
@@ -69,15 +69,15 @@ func main() {
 	fmt.Printf("%v %v\n", s.EqualToString("Hello"), s.EqualToString("Hello from go!"))
 
 	obj := ctx.NewFunctionWithCallback(gojs.GoFunctionCallback(callback))
-	ctx.SetProperty(ctx.GlobalObject(), "f", obj.ToValue(), gojs.PropertyAttributeReadOnly )
-	_, err := ctx.EvaluateScript( "f()", nil, "", 1 )
+	ctx.GlobalObject().SetProperty("f", obj.ToValue(), gojs.PropertyAttributeReadOnly)
+	_, err := ctx.EvaluateScript("f()", nil, "", 1)
 	if err!=nil {
 		panic(err)
 	}
 
 	ctx.EvaluateScript("var a = \"Go!\"", nil, "", 1)
-	a, err := ctx.GetProperty(ctx.GlobalObject(), "a")
-	fmt.Printf("%v %s %v\n", a, ctx.ToStringOrDie(a), err)
+	a, err := ctx.GlobalObject().GetProperty("a")
+	fmt.Printf("%v %s %v\n", a, a.ToStringOrDie(), err)
 
 	fmt.Printf("\nScripts...\n")
 	print_result(ctx, "null")
