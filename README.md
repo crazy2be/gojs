@@ -5,21 +5,18 @@ Highly experiemental, I'm not even sure these work currently. Original author is
 
 Update (2013/10/16): The test suite does not work at all, but it compiles again with go 1.0. Feel free to hack away at this if you think it might be useful :).
 
-### Install:
+Update (2013/12/26): Thanks to @sqs, the test suite now passes. This library should still be considered "experimental", but should work.
 
-	git clone git@github.com:crazy2be/gojs.git
-	go install gojs
+### Install
 
-### Import:
-
-	import "gojs"
+	go get github.com/crazy2be/gojs
 
 ### Use:
 
 	package main
 
 	import (
-		"gojs"
+		"github.com/crazy2be/gojs"
 		"fmt"
 	)
 
