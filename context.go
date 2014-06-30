@@ -10,7 +10,7 @@ func NewContext() *Context {
 
 	ctx := new(Context)
 
-	ctx.ref = C.JSContextRef(C.JSGlobalContextCreate((*[0]uint8)(c_nil)))
+	ctx.ref = C.JSContextRef(C.JSGlobalContextCreate((C.JSClassRef)(c_nil)))
 	return ctx
 }
 
