@@ -5,6 +5,14 @@ package gojs
 import "C"
 import "unsafe"
 
+// Context wraps a JavaScriptCore JSContextRef.
+type Context struct {
+	ref C.JSContextRef
+}
+
+// GlobalContext wraps a JavaScriptCore JSGlobalContextRef.
+type GlobalContext Context
+
 func NewContext() *Context {
 	const c_nil = unsafe.Pointer(uintptr(0))
 
@@ -16,10 +24,17 @@ func NewContext() *Context {
 
 type RawContext C.JSContextRef
 
+type RawGlobalContext C.JSGlobalContextRef
+
 func NewContextFrom(raw RawContext) *Context {
 	ctx := new(Context)
 	ctx.ref = C.JSContextRef(raw)
+	return ctx
+}
 
+func NewGlobalContextFrom(raw RawGlobalContext) *GlobalContext {
+	ctx := new(GlobalContext)
+	ctx.ref = C.JSContextRef(raw)
 	return ctx
 }
 
