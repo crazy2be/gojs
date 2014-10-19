@@ -9,14 +9,6 @@ import (
 	"unsafe"
 )
 
-// Context wraps a JavaScriptCore JSContextRef.
-type Context struct {
-	ref C.JSContextRef
-}
-
-// GlobalContext wraps a JavaScriptCore JSGlobalContextRef.
-type GlobalContext Context
-
 // EvaluateScript evaluates the JavaScript code in script.
 func (ctx *Context) EvaluateScript(script string, thisObject *Object, sourceURL string, startingLineNumber int) (*Value, error) {
 	scriptRef := NewString(script)
