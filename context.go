@@ -14,11 +14,10 @@ type Context struct {
 type GlobalContext Context
 
 func NewContext() *Context {
-	const c_nil = unsafe.Pointer(uintptr(0))
-
 	ctx := new(Context)
 
-	ctx.ref = C.JSContextRef(C.JSGlobalContextCreate((C.JSClassRef)(c_nil)))
+	c_nil := C.JSClassRef(unsafe.Pointer(uintptr(0)))
+	ctx.ref = C.JSContextRef(C.JSGlobalContextCreate(c_nil))
 	return ctx
 }
 
